@@ -1,7 +1,8 @@
 #pragma once
 
-#include <bubulParticle.hpp>
 #include <bubulGas.hpp>
+#include <bubulParticle.hpp>
+#include <bubulWall.hpp>
 
 
 /** 

@@ -5,8 +5,8 @@
 #include <iostream>
 #include <limits>
 
-#define bubulRADIUS 1
-#define bubulRADIUS_2 (bubulRADIUS * bubulRADIUS)
+#define bubulDIAMETER 1
+#define bubulDIAMETER_2 (bubulDIAMETER * bubulDIAMETER)
 
 namespace bubul {
   inline double infinite_mass() {return std::numeric_limits<double>::max();}
@@ -68,7 +68,7 @@ namespace bubul {
     auto delta_pos    = p2.pos - p1.pos;
     auto delta_pos_n2 = delta_pos.norm2();
     
-    if(delta_pos.norm2() >=  bubulRADIUS_2)
+    if(delta_pos_n2 >= bubulDIAMETER_2)
       return false;
 
     auto pp1 = p1;
@@ -102,6 +102,20 @@ namespace bubul {
     return true;
   }
 
+  template<typename Iter, typename ParticleOf>
+  unsigned int hit(const Iter& begin, const Iter& end, const ParticleOf& pof) {
+    unsigned int nb_hits = 0;
+
+    for(auto it1 = begin; it1 != end; ++it1) {
+      auto& p1 = pof(*it1);
+      auto it2 = it1;
+      std::advance(it2, 1);
+      while(it2 != end) nb_hits += (unsigned int)(hit(p1, pof(*(it2++))));
+    }
+    
+    return nb_hits;
+  }
+
   
   inline void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
 		   const Particle& particle, double radius) {
@@ -126,7 +140,7 @@ namespace bubul {
     demo2d::opencv::Frame frame;
     std::function<bool (const OBJECT&)>          do_draw;
     std::function<Particle (const OBJECT&)>      particle_of;
-    std::function<int (const OBJECT&)>           radius_of;
+    std::function<double (const OBJECT&)>        radius_of;
 	
 	
   public:
