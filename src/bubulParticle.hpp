@@ -3,11 +3,14 @@
 #include <demo2d.hpp>
 #include <cmath>
 #include <iostream>
+#include <limits>
 
 #define bubulRADIUS 1
 #define bubulRADIUS_2 (bubulRADIUS * bubulRADIUS)
 
 namespace bubul {
+  inline double infinite_mass() {return std::numeric_limits<double>::max();}
+  
   class Particle {
     static double dt;
     
@@ -71,12 +74,26 @@ namespace bubul {
     if((pp1.pos -pp2.pos).norm2() > delta_pos_n2)
       return false;
 
-    double coef = (2.0 / (p1.m + p2.m))* delta_pos_n2;
-    auto   u    = coef * delta_pos;
-    double d    = (p2.dpos - p1.dpos) * delta_pos;
-
-    p2.dpos -= p1.m * d * u;
-    p1.dpos += p2.m * d * u;
+    if(p1.m == infinite_mass()) {
+      if(p2.m == infinite_mass()) {
+	double coef  = ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
+	p1.dpos     += coef * delta_pos;
+	p2.dpos     -= coef * delta_pos;
+      }
+      else {
+	double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
+	p2.dpos     -= coef * delta_pos;
+      }
+    }
+    else if(p2.m == infinite_mass()) {
+      double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
+      p1.dpos     += coef * delta_pos;
+    }
+    else {
+      double coef  = (2.0 / (p1.m + p2.m) * delta_pos_n2) * ((p2.dpos - p1.dpos) * delta_pos);
+      p1.dpos     += p2.m * coef * delta_pos;
+      p2.dpos     -= p1.m * coef * delta_pos;
+    }
     
     return true;
   }

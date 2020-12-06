@@ -54,9 +54,7 @@ void on_mouse(int event, int x, int y, int, void* user_data) {
 
 int main(int argc, char* argv[]) {
   Data d;
-
-  d.p2.set_mass(0);
-
+  
   auto image = cv::Mat(500, 500, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .2*image.size().width, true);
  
