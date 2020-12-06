@@ -18,12 +18,16 @@ namespace bubul {
     double inv_m;
     demo2d::Point pos;
     demo2d::Point dpos;
-    cv::Scalar color = {0, 0, 0};
   
     friend bool hit(Particle&, Particle&);
     friend std::ostream& operator<<(std::ostream&, const Particle&);
     friend void draw(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, double);
     friend void draw_speed(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, const cv::Scalar&, int, double);
+
+  protected:
+    
+    cv::Scalar color = {0, 0, 0};
+
     
   public:
 
@@ -110,6 +114,63 @@ namespace bubul {
   }
 
 
+  /**
+   * This is an output iterator for drawing collections of particles.
+   */
+  template<typename OBJECT>
+  class ParticleDrawer {
+
+  private:
+	
+    cv::Mat image; // a share pointer.
+    demo2d::opencv::Frame frame;
+    std::function<bool (const OBJECT&)>          do_draw;
+    std::function<Particle (const OBJECT&)>      particle_of;
+    std::function<int (const OBJECT&)>           radius_of;
+	
+	
+  public:
+
+    using difference_type   = long;
+    using value_type        = OBJECT;
+    using pointer           = OBJECT*;
+    using reference         = OBJECT&;
+    using iterator_category = std::output_iterator_tag;
+	
+    template<typename DO_DRAW, typename PARTICLE_OF, typename RADIUS_OF>
+    ParticleDrawer(cv::Mat& image,
+	       demo2d::opencv::Frame frame,
+	       const DO_DRAW&      do_draw,
+	       const PARTICLE_OF&  particle_of,
+	       const RADIUS_OF&    radius_of)
+      : image(image),
+	frame(frame),
+	do_draw(do_draw),
+	particle_of(particle_of),
+	radius_of(radius_of) {}
+
+    ParticleDrawer()                                 = delete;
+    ParticleDrawer(const ParticleDrawer&)            = default;
+    ParticleDrawer& operator=(const ParticleDrawer&) = default; 
+
+    ParticleDrawer& operator++()    {return *this;}
+    ParticleDrawer& operator++(int) {return *this;}
+    ParticleDrawer& operator*()     {return *this;}
+    ParticleDrawer& operator=(const OBJECT& o) {
+      if(do_draw(o))
+	draw(image, frame, particle_of(o), radius_of(o));
+      return *this;
+    }
+  };
+
+  template<typename OBJECT, typename DO_DRAW, typename PARTICLE_OF, typename RADIUS_OF>
+  ParticleDrawer<OBJECT> particle_drawer(cv::Mat&      image,
+				 demo2d::opencv::Frame frame,
+				 const DO_DRAW&        do_draw,
+				 const PARTICLE_OF&    particle_of,
+				 const RADIUS_OF&      radius_of) {
+    return ParticleDrawer<OBJECT>(image, frame, do_draw, particle_of, radius_of);
+  }
 
   
 }
