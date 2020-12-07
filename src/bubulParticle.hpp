@@ -7,6 +7,7 @@
 
 #define bubulDIAMETER 1
 #define bubulDIAMETER_2 (bubulDIAMETER * bubulDIAMETER)
+#define bubulEPSILON_EC 0
 
 namespace bubul {
   inline double infinite_mass() {return std::numeric_limits<double>::max();}
@@ -95,8 +96,31 @@ namespace bubul {
     }
     else {
       double coef  = (2.0 / (p1.m + p2.m) * delta_pos_n2) * ((p2.dpos - p1.dpos) * delta_pos);
+      double E = p1.m * p1.dpos.norm2() + p2.m * p2.dpos.norm2();
       p1.dpos     += p2.m * coef * delta_pos;
       p2.dpos     -= p1.m * coef * delta_pos;
+
+      double v1_2 = p1.dpos.norm2();
+      double v2_2 = p2.dpos.norm2();
+      double Ec1  = p1.m * v1_2;
+      double Ec2  = p2.m * v2_2;
+      E -=  Ec1 + Ec2;
+      if(std::fabs(E) > bubulEPSILON_EC) {
+	if(E > 0) {
+	  if(v1_2 > v2_2) 
+	    p1.dpos *= std::sqrt(1 + E / Ec1);
+	  else
+	    p2.dpos *= std::sqrt(1 + E / Ec2);
+	}
+	else {
+	  if(v1_2 > v2_2) 
+	    p2.dpos *= std::sqrt(1 + E / Ec1);
+	  else
+	    p1.dpos *= std::sqrt(1 + E / Ec2);
+	}
+      }
+      
+      
     }
     
     return true;
