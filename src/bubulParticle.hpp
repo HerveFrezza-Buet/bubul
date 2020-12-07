@@ -54,6 +54,9 @@ namespace bubul {
     void                 set_position(const demo2d::Point& p)       {pos  = p;}
     void                 set_speed(const demo2d::Point& s)          {dpos = s;}
     void                 set_mass(double mass)                      {m = mass; inv_m = 1/mass;}
+    void                 set_color(unsigned char r,
+				   unsigned char g,
+				   unsigned char b)                 {color = cv::Scalar((double)b, (double)g, (double)r);}
   };
   
   inline std::ostream& operator<<(std::ostream& os, const Particle& p) {

@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cmath>
 
+#define SPEED 10
+
 using ref = std::shared_ptr<bubul::Particle>;
 
 double bubul::Particle::dt = .01;
@@ -36,7 +38,7 @@ int main(int argc, char* argv[]) {
   std::vector<ref> particles;
   auto out = std::back_inserter(particles);
   for(unsigned int i=0; i < nb_particles; ++i)
-    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-14.5, -14.5), demo2d::Point(14.5, 14.5), 4.);
+    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-14.5, -14.5), demo2d::Point(14.5, 14.5), SPEED);
 
   // Let us add walls.
   for(double x = -15; x <= 15; x+=1.) {
@@ -47,6 +49,8 @@ int main(int argc, char* argv[]) {
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-15., y));
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 15., y));
   }
+
+  particles[0]->set_color(50, 50, 150);
 
   std::cout << std::endl
 	    << std::endl
@@ -110,7 +114,7 @@ int main(int argc, char* argv[]) {
 	(*git)->set_position(demo2d::uniform(random_device,
 					     demo2d::Point(-3, -14.5),
 					     demo2d::Point( 3,  12.0)));
-	(*git)->set_speed(demo2d::Point(0, 4));
+	(*git)->set_speed(demo2d::Point(0, SPEED));
       }
       break;
     case 'b':
@@ -120,14 +124,14 @@ int main(int argc, char* argv[]) {
 	(*git)->set_position(demo2d::uniform(random_device,
 					     demo2d::Point(-4, -14.5),
 					     demo2d::Point( 2,  -8.5)));
-	(*git)->set_speed(demo2d::Point(0, 4));
+	(*git)->set_speed(demo2d::Point(0, SPEED));
       }
       gas_end = particles.begin() + nb_particles;
       for(; git != gas_end; ++git) {
 	(*git)->set_position(demo2d::uniform(random_device,
 					     demo2d::Point(-2,  8.5),
 					     demo2d::Point( 4, 14.5)));
-	(*git)->set_speed(demo2d::Point(0, -4));
+	(*git)->set_speed(demo2d::Point(0, -SPEED));
       }
       break;
     default:
