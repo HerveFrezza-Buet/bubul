@@ -13,6 +13,7 @@ namespace bubul {
   inline double infinite_mass() {return std::numeric_limits<double>::max();}
   
   class Particle {
+  protected:
     static double dt;
     
     double m;
@@ -25,7 +26,6 @@ namespace bubul {
     friend void draw(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, double);
     friend void draw_speed(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, const cv::Scalar&, int, double);
 
-  protected:
     
     cv::Scalar color = {0, 0, 0};
 
@@ -42,10 +42,10 @@ namespace bubul {
     Particle(const Particle&)            = default;
     Particle& operator=(const Particle&) = default;
 
-    void operator++()                {pos += dpos * dt;}
+    virtual void operator++() {}
     void operator+=(double duration) {pos += dpos * duration;}
     void operator-=(double duration) {pos -= dpos * duration;}
-
+    
     const demo2d::Point& position()                           const {return pos;}
     const demo2d::Point& speed()                              const {return dpos;}
     double               mass()                               const {return m;}
@@ -53,7 +53,7 @@ namespace bubul {
     const demo2d::Point  p()                                  const {return m * dpos;}
     void                 set_position(const demo2d::Point& p)       {pos  = p;}
     void                 set_speed(const demo2d::Point& s)          {dpos = s;}
-    void                 set_mass(double mass)                      {m = mass; inv_m = 1/mass;}
+    virtual void         set_mass(double mass)                      {m = mass; inv_m = 1/mass;}
     void                 set_color(unsigned char r,
 				   unsigned char g,
 				   unsigned char b)                 {color = cv::Scalar((double)b, (double)g, (double)r);}
