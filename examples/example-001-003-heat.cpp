@@ -49,6 +49,8 @@ int main(int argc, char* argv[]) {
     *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( .6, y));
   }
 
+  
+
   auto nb_mobile_particles = particles.size();
   
   // We add adiabatic walls.
