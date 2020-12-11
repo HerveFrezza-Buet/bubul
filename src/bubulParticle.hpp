@@ -49,7 +49,6 @@ namespace bubul {
     const demo2d::Point& position()                           const {return pos;}
     const demo2d::Point& speed()                              const {return dpos;}
     double               mass()                               const {return m;}
-    double               Ec()                                 const {return .5*m*dpos.norm2();}
     const demo2d::Point  p()                                  const {return m * dpos;}
     void                 set_position(const demo2d::Point& p)       {pos  = p;}
     void                 set_speed(const demo2d::Point& s)          {dpos = s;}
@@ -57,6 +56,10 @@ namespace bubul {
     void                 set_color(unsigned char r,
 				   unsigned char g,
 				   unsigned char b)                 {color = cv::Scalar((double)b, (double)g, (double)r);}
+
+    virtual double   Ec() const {return .5*m*dpos.norm2();}
+    virtual double   Ep() const {return 0;}
+    virtual double   E()  const {return Ec() + Ep();}
   };
   
   inline std::ostream& operator<<(std::ostream& os, const Particle& p) {

@@ -24,5 +24,7 @@ namespace bubul {
     Gas(RANDOM_ENGINE& gen, const demo2d::Point& pos_min, const demo2d::Point& pos_max, double speed)
       : Gas(gen, demo2d::uniform(gen, pos_min, pos_max), speed) {}
     virtual void operator++() override {pos += dpos * dt;}
+    
+    virtual double E() const override {return Ec();}
   };
 }
