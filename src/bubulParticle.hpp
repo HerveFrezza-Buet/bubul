@@ -133,7 +133,7 @@ namespace bubul {
   }
 
   template<typename Iter, typename ParticleOf>
-  unsigned int hit(const Iter& begin, const Iter& end, const ParticleOf& pof) {
+  unsigned int hit(Iter begin, Iter end, const ParticleOf& pof) {
     unsigned int nb_hits = 0;
 
     for(auto it1 = begin; it1 != end; ++it1) {
@@ -144,6 +144,14 @@ namespace bubul {
     }
     
     return nb_hits;
+  }
+
+  
+  template<typename Iter, typename ParticleOf>
+  double E(Iter begin, Iter end, const ParticleOf& pof) {
+    double res = 0;
+    for(auto it = begin; it != end; ++it) res += pof(*it).E();
+    return res;
   }
 
   

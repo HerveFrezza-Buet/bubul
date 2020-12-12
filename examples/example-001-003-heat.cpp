@@ -48,16 +48,20 @@ int main(int argc, char* argv[]) {
     *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-29.5, -24.5), demo2d::Point(29.5, -1.5), COLD_SPEED);
 
   // We the diathermal walls.
+  auto l = particles.size();
   for(double y = 1; y <= 24; y += 1.) {
     *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point(-1, y));
     *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( 0, y));
     *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( 1, y));
   }
+  unsigned int nb_w1 = particles.size() - l;
+  l = particles.size();
   for(double x = 10; x < 20; x += 1.) {
     *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x, -1));
     *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x,  0));
     *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x,  1));
   }
+  unsigned int nb_w2 = particles.size() - l;
   
   unsigned int nb_mobile_particles = particles.size();
 
@@ -79,6 +83,15 @@ int main(int argc, char* argv[]) {
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 30., y));
   }
 
+  // Energy bar
+  double sum = bubul::E(particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
+  bubul::plot::EnergyHBar bar({-30, 26}, 1.5, 60/sum);
+  bar.display.push_back({"g1", cv::Scalar(255, 180, 190)});
+  bar.display.push_back({"w1", cv::Scalar(  0,   0, 120)});
+  bar.display.push_back({"g2", cv::Scalar(255, 180, 190)});
+  bar.display.push_back({"w2", cv::Scalar(  0,   0, 120)});
+  bar.display.push_back({"g3", cv::Scalar(255, 180, 190)});
+
   std::cout << std::endl
 	    << std::endl
 	    << "<ESC>   quit"    << std::endl
@@ -92,16 +105,34 @@ int main(int argc, char* argv[]) {
   while(keycode != 27) {
     image = cv::Scalar(255,255,255);
  
-     bubul::hit(particles.begin(), particles.end(),
-		[](auto& ptr) -> bubul::Particle& {return *ptr;});
+     bubul::hit(particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
      gas_end = particles.begin() + nb_mobile_particles;
      for(git = particles.begin(); git != gas_end; ++git) ++(*(*git));
       
-    std::copy(particles.begin(), particles.end(), drawer);
+     std::copy(particles.begin(), particles.end(), drawer);
+
+     bar.content["g1"] = bubul::E(particles.begin(),
+				  particles.begin() + nb_hot_particles,
+				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
+     bar.content["g2"] = bubul::E(particles.begin() + nb_hot_particles,
+				  particles.begin() + nb_hot_particles + nb_cold1_particles,
+				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
+     bar.content["g3"] = bubul::E(particles.begin() + nb_hot_particles + nb_cold1_particles,
+				  particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles,
+				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
+     bar.content["w1"] = bubul::E(particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles,
+				  particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles + nb_w1,
+				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
+     bar.content["w2"] = bubul::E(particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles + nb_w1,
+				  particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles + nb_w1 + nb_w2,
+				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
+    bar(image, frame);
     
     cv::imshow("Heat", image);
     keycode = cv::waitKey(1) & 0xFF;
+
+    
     
     if((char)(keycode) == ' ') {
     }

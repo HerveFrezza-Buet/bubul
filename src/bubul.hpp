@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bubulEnergyBar.hpp>
 #include <bubulGas.hpp>
 #include <bubulParticle.hpp>
 #include <bubulSpring.hpp>

@@ -75,7 +75,7 @@ namespace bubul {
 	  dpos.x          = A_omega * std::cos(phi);
 
 	  _Ec = .5 * m *dpos.x * dpos.x;
-	  _Ep = .5* bubulDIATHERMAL_K * dx;
+	  _Ep = .5* bubulDIATHERMAL_K * dx * dx;
 	  // std::cout << "(x, v, v) " << (pos.x - ref) << ' ' << dpos.x << ' ' << dpos.norm() << std::endl;
 	}
       }
@@ -114,7 +114,7 @@ namespace bubul {
 	  dpos.y          = A_omega * std::cos(phi);
 
 	  _Ec = .5 * m *dpos.y * dpos.y;
-	  _Ep = .5* bubulDIATHERMAL_K * dx;
+	  _Ep = .5* bubulDIATHERMAL_K * dx * dx;
 	  // std::cout << "(x, v, v) " << (pos.x - ref) << ' ' << dpos.x << ' ' << dpos.norm() << std::endl;
 	}
       }
