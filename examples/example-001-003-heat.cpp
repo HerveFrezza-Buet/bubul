@@ -23,9 +23,11 @@ int main(int argc, char* argv[]) {
     return 0;
   }
   
-  unsigned int nb_particles = std::stoi(argv[1]) / 2; // number of cold/hot.
-
-  auto image = cv::Mat(600, 1200, CV_8UC3, cv::Scalar(255,255,255));
+  unsigned int nb_hot_particles    = std::stoi(argv[1]); 
+  unsigned int nb_cold1_particles  = nb_hot_particles;
+  unsigned int nb_cold2_particles  = 2*nb_hot_particles;
+  
+  auto image = cv::Mat(1000, 1200, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .015*image.size().width, true);
   cv::namedWindow("Heat", cv::WINDOW_AUTOSIZE);
 
@@ -38,27 +40,41 @@ int main(int argc, char* argv[]) {
   auto out = std::back_inserter(particles);
 
   // We add hot and cold gas.
-  for(unsigned int i=0; i < nb_particles; ++i)
-    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-29.5, -14.5), demo2d::Point( -.5, 14.5), HOT_SPEED);
-  for(unsigned int i=0; i < nb_particles; ++i)
-    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(   .5, -14.5), demo2d::Point(29.5, 14.5), COLD_SPEED);
+  for(unsigned int i=0; i < nb_hot_particles; ++i)
+    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-29.5,    .5), demo2d::Point(-1.5, 24.5), HOT_SPEED);
+  for(unsigned int i=0; i < nb_cold1_particles; ++i)
+    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(  1.5,   1.5), demo2d::Point(29.5, 24.5), COLD_SPEED);
+  for(unsigned int i=0; i < nb_cold2_particles; ++i)
+    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-29.5, -24.5), demo2d::Point(29.5, -1.5), COLD_SPEED);
 
   // We the diathermal walls.
-  for(double y = -14; y <= 14; y+=1.) {
-    *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point(-.6, y));
-    *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( .6, y));
+  for(double y = 1; y <= 24; y += 1.) {
+    *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point(-1, y));
+    *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( 0, y));
+    *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( 1, y));
   }
-
+  for(double x = 10; x < 20; x += 1.) {
+    *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x, -1));
+    *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x,  0));
+    *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x,  1));
+  }
   
+  unsigned int nb_mobile_particles = particles.size();
 
-  auto nb_mobile_particles = particles.size();
-  
   // We add adiabatic walls.
-  for(double x = -30; x <= 30; x+=1.) {
-    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -15.));
-    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  15.));
+  for(double x = -30; x <= 30; x += 1.) {
+    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -25.));
+    if(!(10 <= x &&  x < 20))
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,   0.));
+    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  25.));
   }
-  for(double y = -14; y <= 14; y+=1.) {
+  
+  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 9,  1.));
+  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(20,  1.));
+  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 9, -1.));
+  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(20, -1.));
+  
+  for(double y = -24; y <= 24; y += 1.) {
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-30., y));
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 30., y));
   }
@@ -75,12 +91,12 @@ int main(int argc, char* argv[]) {
   
   while(keycode != 27) {
     image = cv::Scalar(255,255,255);
+ 
+     bubul::hit(particles.begin(), particles.end(),
+		[](auto& ptr) -> bubul::Particle& {return *ptr;});
 
-    bubul::hit(particles.begin(), particles.end(),
-	       [](auto& ptr) -> bubul::Particle& {return *ptr;});
-
-    gas_end = particles.begin() + nb_mobile_particles;
-    for(git = particles.begin(); git != gas_end; ++git) ++(*(*git));
+     gas_end = particles.begin() + nb_mobile_particles;
+     for(git = particles.begin(); git != gas_end; ++git) ++(*(*git));
       
     std::copy(particles.begin(), particles.end(), drawer);
     
@@ -88,12 +104,6 @@ int main(int argc, char* argv[]) {
     keycode = cv::waitKey(1) & 0xFF;
     
     if((char)(keycode) == ' ') {
-      gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git)
-	*((*git)) = bubul::Gas(random_device, demo2d::Point(-29.5, -14.5), demo2d::Point( -.5, 14.5), HOT_SPEED);
-      gas_end += nb_particles;
-      for(; git != gas_end; ++git)
-	*((*git)) = bubul::Gas(random_device, demo2d::Point(   .5, -14.5), demo2d::Point(29.5, 14.5), COLD_SPEED);
     }
   }
 

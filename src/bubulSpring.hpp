@@ -4,7 +4,7 @@
 #include <bubulParticle.hpp>
 #include <bubulGas.hpp>
 
-#define bubulDIATHERMAL_K    200
+#define bubulDIATHERMAL_K    400
 #define bubulDIATHERMAL_MASS (bubulGAS_MASS*5)
 
 namespace bubul {
@@ -70,12 +70,12 @@ namespace bubul {
 	  t              += dt;
 	  phi             = omega * t;
 	  // std::cout << "(t, phi_rad, phi_deg) " << t << ' ' << phi << ' ' << (int)(phi * 18000 / 3.1415926535)*.01 << std::endl;
-	  double dx       = A * std::sin(phi)
+	  double dx       = A * std::sin(phi);
 	  pos.x           = ref + dx;
 	  dpos.x          = A_omega * std::cos(phi);
 
-	  Ec = .5 * m *dpos.x * dpos.x;
-	  Ep = .5* bubulDIATHERMAL_K * dx;
+	  _Ec = .5 * m *dpos.x * dpos.x;
+	  _Ep = .5* bubulDIATHERMAL_K * dx;
 	  // std::cout << "(x, v, v) " << (pos.x - ref) << ' ' << dpos.x << ' ' << dpos.norm() << std::endl;
 	}
       }
@@ -85,7 +85,7 @@ namespace bubul {
     private:
     public:
       VLimit(const demo2d::Point& pos)
-	: Limit(pos, {1, 0}) {}
+	: Limit(pos, {0, 1}) {}
       
       virtual void operator++() override {
 	double X;
@@ -109,12 +109,12 @@ namespace bubul {
 	  t              += dt;
 	  phi             = omega * t;
 	  // std::cout << "(t, phi_rad, phi_deg) " << t << ' ' << phi << ' ' << (int)(phi * 18000 / 3.1415926535)*.01 << std::endl;
-	  double dx       = A * std::sin(phi)
+	  double dx       = A * std::sin(phi);
 	  pos.y           = ref + dx;
 	  dpos.y          = A_omega * std::cos(phi);
 
-	  Ec = .5 * m *dpos.y * dpos.y;
-	  Ep = .5* bubulDIATHERMAL_K * dx;
+	  _Ec = .5 * m *dpos.y * dpos.y;
+	  _Ep = .5* bubulDIATHERMAL_K * dx;
 	  // std::cout << "(x, v, v) " << (pos.x - ref) << ' ' << dpos.x << ' ' << dpos.norm() << std::endl;
 	}
       }

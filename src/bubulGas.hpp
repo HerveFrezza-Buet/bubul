@@ -15,6 +15,9 @@ namespace bubul {
       : Particle(bubulGAS_MASS, pos, speed) {
       color = cv::Scalar(255, 180, 190); 
     }
+    
+    Gas(const demo2d::Point& pos) : Gas(pos, {0., 0.}) {}
+    Gas() : Gas({0., 0.}) {}
 
     template<typename RANDOM_ENGINE>
     Gas(RANDOM_ENGINE& gen, const demo2d::Point& pos, double speed)

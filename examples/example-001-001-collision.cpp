@@ -4,15 +4,16 @@
 #define PI 3.141592654
 
 struct Data {
-  bubul::Particle p1;
-  bubul::Particle p2;
-  bubul::Particle pp1;
-  bubul::Particle pp2;
+  bubul::Gas p1;
+  bubul::Gas p2;
+  bubul::Gas pp1;
+  bubul::Gas pp2;
   bool hit;
   bool simu_mode;
   unsigned int step;
 
-  Data() {
+  Data() 
+    : p1({0,0}), p2({0,0}), pp1({0,0}), pp2({0,0}) {
     clear();
     simu_mode = false;
   }
