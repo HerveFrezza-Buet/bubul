@@ -4,6 +4,7 @@
 #include <bubulGas.hpp>
 #include <bubulParticle.hpp>
 #include <bubulSpring.hpp>
+#include <bubulWeighted.hpp>
 #include <bubulWall.hpp>
 
 
