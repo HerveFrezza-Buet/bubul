@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
   unsigned int nb_threads = std::thread::hardware_concurrency();
 
   if(argc != 2) {
-    std::cout << "Usage : " << argv[0] << " <nb-gas-particles>" << std::endl;
+    std::cout << "Usage : " << argv[0] << " <nb-hot-gas-particles (300)>" << std::endl;
     return 0;
   }
   
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
   for(unsigned int i=0; i < nb_cold1_particles; ++i)
     *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(  1.5,   1.5), demo2d::Point(29.5, 24.5), COLD_SPEED);
   for(unsigned int i=0; i < nb_cold2_particles; ++i)
-    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-29.5, -24.5), demo2d::Point(29.5, -1.5), COLD_SPEED);
+    *(out++) = std::make_shared<bubul::MGas>(random_device, demo2d::Point(-29.5, -24.5), demo2d::Point(29.5, -1.5), COLD_SPEED);
 
   // We the diathermal walls.
   auto l = particles.size();
