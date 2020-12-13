@@ -7,6 +7,8 @@
 #include <memory>
 #include <algorithm>
 #include <cmath>
+#include <thread>
+
 
 #define SPEED 10
 
@@ -17,6 +19,9 @@ bubul::param::Time bubul::Particle::time = .01;
 int main(int argc, char* argv[]) {
   std::random_device rd;  
   std::mt19937 random_device(rd());
+
+  unsigned int nb_threads = std::thread::hardware_concurrency();
+  
 
   if(argc != 2) {
     std::cout << "Usage : " << argv[0] << " <nb-gas-particles>" << std::endl;
@@ -72,7 +77,7 @@ int main(int argc, char* argv[]) {
     image = cv::Scalar(255,255,255);
 
     if(do_simul) {
-      bubul::hit(particles.begin(), particles.end(),
+      bubul::hit(nb_threads, particles.begin(), particles.end(),
 		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
       gas_end = particles.begin() + nb_particles;

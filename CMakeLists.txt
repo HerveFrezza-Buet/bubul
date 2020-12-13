@@ -36,7 +36,7 @@ Name: ${CMAKE_PROJECT_NAME}
 Description: ${PROJECT_DESCRIPTION_SUMMARY}
 Version: ${PACKAGE_VERSION}
 Requires: ${PKG_CONFIG_DEPENDS}
-Libs: 
+Libs: -pthread
 Cflags: -I${INCLUDE_INSTALL_DIR} ${PROJECT_CFLAGS}
 "
 )

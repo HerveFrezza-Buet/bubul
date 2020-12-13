@@ -7,6 +7,7 @@
 #include <memory>
 #include <algorithm>
 #include <cmath>
+#include <thread>
 
 #define HOT_SPEED  10
 #define COLD_SPEED  .1
@@ -17,6 +18,8 @@ bubul::param::Time bubul::Particle::time = .01;
 int main(int argc, char* argv[]) {
   std::random_device rd;  
   std::mt19937 random_device(rd());
+
+  unsigned int nb_threads = std::thread::hardware_concurrency();
 
   if(argc != 2) {
     std::cout << "Usage : " << argv[0] << " <nb-gas-particles>" << std::endl;
@@ -84,7 +87,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Energy bar
-  double sum = bubul::E(particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
+  double sum = bubul::E(1, particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
   bubul::plot::EnergyHBar bar({-30, 26}, 1.5, 60/sum);
   bar.display.push_back({"g1", cv::Scalar(255, 180, 190)});
   bar.display.push_back({"w1", cv::Scalar(  0,   0, 120)});
@@ -105,26 +108,26 @@ int main(int argc, char* argv[]) {
   while(keycode != 27) {
     image = cv::Scalar(255,255,255);
  
-     bubul::hit(particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
+     bubul::hit(nb_threads, particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
      gas_end = particles.begin() + nb_mobile_particles;
      for(git = particles.begin(); git != gas_end; ++git) ++(*(*git));
       
      std::copy(particles.begin(), particles.end(), drawer);
 
-     bar.content["g1"] = bubul::E(particles.begin(),
+     bar.content["g1"] = bubul::E(nb_threads, particles.begin(),
 				  particles.begin() + nb_hot_particles,
 				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
-     bar.content["g2"] = bubul::E(particles.begin() + nb_hot_particles,
+     bar.content["g2"] = bubul::E(nb_threads, particles.begin() + nb_hot_particles,
 				  particles.begin() + nb_hot_particles + nb_cold1_particles,
 				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
-     bar.content["g3"] = bubul::E(particles.begin() + nb_hot_particles + nb_cold1_particles,
+     bar.content["g3"] = bubul::E(nb_threads, particles.begin() + nb_hot_particles + nb_cold1_particles,
 				  particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles,
 				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
-     bar.content["w1"] = bubul::E(particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles,
+     bar.content["w1"] = bubul::E(1, particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles,
 				  particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles + nb_w1,
 				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
-     bar.content["w2"] = bubul::E(particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles + nb_w1,
+     bar.content["w2"] = bubul::E(1, particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles + nb_w1,
 				  particles.begin() + nb_hot_particles + nb_cold1_particles + nb_cold2_particles + nb_w1 + nb_w2,
 				  [](auto& ptr) -> bubul::Particle& {return *ptr;});
     bar(image, frame);
