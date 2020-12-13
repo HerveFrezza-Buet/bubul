@@ -11,10 +11,23 @@
 
 namespace bubul {
   inline double infinite_mass() {return std::numeric_limits<double>::max();}
+
+  namespace param {
+    struct Time {
+      double dt;
+      double dt_2;
+      Time(double dt) : dt(dt), dt_2(dt*dt) {}
+      Time()                       = default;
+      Time(const Time&)            = default;
+      Time& operator=(const Time&) = default;
+      void operator=(double dt) {this->dt = dt; dt_2 = dt*dt;}
+    };
+	    
+  }
   
   class Particle {
   protected:
-    static double dt;
+    static param::Time time;
     
     double m;
     double inv_m;
@@ -80,8 +93,8 @@ namespace bubul {
 
     auto pp1 = p1;
     auto pp2 = p2;
-    pp1 += Particle::dt;
-    pp2 += Particle::dt;
+    pp1 += Particle::time.dt;
+    pp2 += Particle::time.dt;
     if((pp1.pos -pp2.pos).norm2() > delta_pos_n2)
       return false;
 

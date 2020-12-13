@@ -12,7 +12,7 @@
 #define COLD_SPEED  .1
 using ref = std::shared_ptr<bubul::Particle>;
 
-double bubul::Particle::dt = .01;
+bubul::param::Time bubul::Particle::time = .01;
 
 int main(int argc, char* argv[]) {
   std::random_device rd;  

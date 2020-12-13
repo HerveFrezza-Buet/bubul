@@ -67,7 +67,7 @@ namespace bubul {
 	  double A_omega  = std::sqrt(X*X+Y*Y);
 	  double A        = A_omega * inv_omega;
 	  // std::cout << "A " << A << std::endl;
-	  t              += dt;
+	  t              += time.dt;
 	  phi             = omega * t;
 	  // std::cout << "(t, phi_rad, phi_deg) " << t << ' ' << phi << ' ' << (int)(phi * 18000 / 3.1415926535)*.01 << std::endl;
 	  double dx       = A * std::sin(phi);
@@ -106,7 +106,7 @@ namespace bubul {
 	  double A_omega  = std::sqrt(X*X+Y*Y);
 	  double A        = A_omega * inv_omega;
 	  // std::cout << "A " << A << std::endl;
-	  t              += dt;
+	  t              += time.dt;
 	  phi             = omega * t;
 	  // std::cout << "(t, phi_rad, phi_deg) " << t << ' ' << phi << ' ' << (int)(phi * 18000 / 3.1415926535)*.01 << std::endl;
 	  double dx       = A * std::sin(phi);

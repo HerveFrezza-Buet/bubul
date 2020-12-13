@@ -27,7 +27,7 @@ struct Data {
   }
 };
 
-double bubul::Particle::dt = .01;
+bubul::param::Time bubul::Particle::time = .01;
  
 void on_mouse(int event, int x, int y, int, void* user_data) {
   auto& d = *(reinterpret_cast<Data*>(user_data));
