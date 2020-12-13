@@ -10,7 +10,7 @@
 #include <thread>
 
 #define HOT_SPEED  10
-#define COLD_SPEED  .1
+#define COLD_SPEED  0.05
 using ref = std::shared_ptr<bubul::Particle>;
 
 bubul::param::Time bubul::Particle::time = .01;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   
   unsigned int nb_hot_particles    = std::stoi(argv[1]); 
   unsigned int nb_cold1_particles  = nb_hot_particles;
-  unsigned int nb_cold2_particles  = 2*nb_hot_particles;
+  unsigned int nb_cold2_particles  = 4*nb_hot_particles;
   
   auto image = cv::Mat(1000, 1200, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .015*image.size().width, true);
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 
   // We add hot and cold gas.
   for(unsigned int i=0; i < nb_hot_particles; ++i)
-    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-29.5,    .5), demo2d::Point(-1.5, 24.5), HOT_SPEED);
+    *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-29.5,   1.5), demo2d::Point(-1.5, 24.5), HOT_SPEED);
   for(unsigned int i=0; i < nb_cold1_particles; ++i)
     *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(  1.5,   1.5), demo2d::Point(29.5, 24.5), COLD_SPEED);
   for(unsigned int i=0; i < nb_cold2_particles; ++i)
@@ -52,14 +52,14 @@ int main(int argc, char* argv[]) {
 
   // We the diathermal walls.
   auto l = particles.size();
-  for(double y = 1; y <= 24; y += 1.) {
+  for(double y = 2; y <= 24; y += 1.) {
     *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point(-1, y));
     *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( 0, y));
     *(out++) = std::make_shared<bubul::diathermal::HLimit>(demo2d::Point( 1, y));
   }
   unsigned int nb_w1 = particles.size() - l;
   l = particles.size();
-  for(double x = 10; x < 20; x += 1.) {
+  for(double x = 7; x < 30; x += 1.) {
     *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x, -1));
     *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x,  0));
     *(out++) = std::make_shared<bubul::diathermal::VLimit>(demo2d::Point(x,  1));
@@ -71,15 +71,13 @@ int main(int argc, char* argv[]) {
   // We add adiabatic walls.
   for(double x = -30; x <= 30; x += 1.) {
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -25.));
-    if(!(10 <= x &&  x < 20))
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,   0.));
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  25.));
   }
-  
-  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 9,  1.));
-  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(20,  1.));
-  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 9, -1.));
-  *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(20, -1.));
+  for(double x = -29; x <= 6; x += 1.) {
+    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -1.));
+    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  0.));
+    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  1.));
+  }
   
   for(double y = -24; y <= 24; y += 1.) {
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-30., y));

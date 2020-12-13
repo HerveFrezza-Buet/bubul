@@ -195,7 +195,7 @@ namespace bubul {
   template<typename Iter, typename ParticleOf>
   void timestep(unsigned int nb_threads, Iter begin, Iter end, const ParticleOf& pof) {
     auto nb = std::distance(begin, end);
-    
+
     if((nb_threads <= 1) || (10 * nb_threads > nb)) {
       for(auto it = begin; it != end; ++it) ++(pof(*it));
       return;
@@ -208,7 +208,7 @@ namespace bubul {
       tasks.emplace_back([first, last, &pof]() {for(auto it = first; it != last; ++it) ++(pof(*it));});
     }
     last = begin + (1*nb)/nb_threads;
-    for(auto it = begin; it != end; ++it) ++(pof(*it));
+    for(auto it = begin; it != last; ++it) ++(pof(*it));
     for(auto& t : tasks) t.join();
   }
     
