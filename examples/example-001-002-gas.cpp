@@ -81,7 +81,8 @@ int main(int argc, char* argv[]) {
 		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
       gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git) ++(*(*git));
+     bubul::timestep(nb_threads, particles.begin(), gas_end,
+		     [](auto& ptr) -> bubul::Particle& {return *ptr;});
     }
     std::copy(particles.begin(), particles.end(), drawer);
     

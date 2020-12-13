@@ -8,14 +8,14 @@
 #include <algorithm>
 #include <cmath>
 
-#define SPEED 10
+#define SPEED 0
 #define RADIUS 50
 
 #define PI 3.14159365435
 
 using ref = std::shared_ptr<bubul::Particle>;
 
-bubul::param::Time    bubul::Particle::time    = .01;
+bubul::param::Time    bubul::Particle::time    = .005;
 bubul::param::Gravity bubul::Weighted::gravity = -20;
 
 int main(int argc, char* argv[]) {
@@ -79,7 +79,8 @@ int main(int argc, char* argv[]) {
 		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
       gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git) ++(*(*git));
+     bubul::timestep(nb_threads, particles.begin(), gas_end,
+		     [](auto& ptr) -> bubul::Particle& {return *ptr;});
     }
     std::copy(particles.begin(), particles.end(), drawer);
     

@@ -102,7 +102,6 @@ int main(int argc, char* argv[]) {
 	    << std::endl;
   
   int keycode = 0;
-  auto git = particles.begin();
   auto gas_end = particles.begin();
   
   while(keycode != 27) {
@@ -111,7 +110,7 @@ int main(int argc, char* argv[]) {
      bubul::hit(nb_threads, particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
      gas_end = particles.begin() + nb_mobile_particles;
-     for(git = particles.begin(); git != gas_end; ++git) ++(*(*git));
+     bubul::timestep(nb_threads, particles.begin(), gas_end, [](auto& ptr) -> bubul::Particle& {return *ptr;});
       
      std::copy(particles.begin(), particles.end(), drawer);
 
