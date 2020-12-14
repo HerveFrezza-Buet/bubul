@@ -44,6 +44,7 @@ namespace bubul {
     
     class HLimit : public Limit {
     private:
+      
     public:
       HLimit(const demo2d::Point& pos)
 	: Limit(pos, {1, 0}) {}
@@ -83,6 +84,8 @@ namespace bubul {
     
     class VLimit : public Limit {
     private:
+      
+      
     public:
       VLimit(const demo2d::Point& pos)
 	: Limit(pos, {0, 1}) {}

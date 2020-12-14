@@ -42,7 +42,6 @@ namespace bubul {
 
     
     cv::Scalar color = {0, 0, 0};
-
     
   public:
 
@@ -190,6 +189,70 @@ namespace bubul {
     for(auto& f : Es) res += f.get();
     return res;
   }
+
+  
+  template<typename Iter, typename ParticleOf>
+  double Ec(unsigned int nb_threads, Iter begin, Iter end, const ParticleOf& pof) {
+    auto nb = std::distance(begin, end);
+    
+    if((nb_threads <= 1) || (10 * nb_threads > nb)) {
+      double res = 0;
+      for(auto it = begin; it != end; ++it) res += pof(*it).Ec();
+      return res;
+    }
+
+    std::vector<std::future<double>> Es;
+    auto out = std::back_inserter(Es);
+    auto first = begin + (1*nb)/nb_threads;
+    auto last  = first;
+    for(unsigned int i = 2; i <= nb_threads; ++i, first = last) {
+      last =  begin + (i*nb)/nb_threads;
+      *(out++) = std::async(std::launch::async,
+			    [first, last, &pof]() {
+			      double res = 0;
+			      for(auto it = first; it != last; ++it) res += pof(*it).Ec();
+			      return res;
+			    });
+    }
+    double res = 0;
+    last = begin + (1*nb)/nb_threads;
+    for(auto it = begin; it != last; ++it) res += pof(*it).Ec();
+    for(auto& f : Es) res += f.get();
+    return res;
+  }
+  
+  template<typename Iter, typename ParticleOf>
+  double Ep(unsigned int nb_threads, Iter begin, Iter end, const ParticleOf& pof) {
+    auto nb = std::distance(begin, end);
+    
+    if((nb_threads <= 1) || (10 * nb_threads > nb)) {
+      double res = 0;
+      for(auto it = begin; it != end; ++it) res += pof(*it).Ep();
+      return res;
+    }
+
+    std::vector<std::future<double>> Es;
+    auto out = std::back_inserter(Es);
+    auto first = begin + (1*nb)/nb_threads;
+    auto last  = first;
+    for(unsigned int i = 2; i <= nb_threads; ++i, first = last) {
+      last =  begin + (i*nb)/nb_threads;
+      *(out++) = std::async(std::launch::async,
+			    [first, last, &pof]() {
+			      double res = 0;
+			      for(auto it = first; it != last; ++it) res += pof(*it).Ep();
+			      return res;
+			    });
+    }
+    double res = 0;
+    last = begin + (1*nb)/nb_threads;
+    for(auto it = begin; it != last; ++it) res += pof(*it).Ep();
+    for(auto& f : Es) res += f.get();
+    return res;
+  }
+
+
+  
 
   
   template<typename Iter, typename ParticleOf>

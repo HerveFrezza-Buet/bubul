@@ -29,6 +29,8 @@ namespace bubul {
       EnergyBar(const EnergyBar&)            = default;
       EnergyBar& operator=(const EnergyBar&) = default;
 
+      void rescale(double meter_per_joule) {this->meter_per_joule = meter_per_joule;}
+      
       void operator()(cv::Mat& image,
 		      const demo2d::opencv::Frame& frame) const {
 	auto ref = base;

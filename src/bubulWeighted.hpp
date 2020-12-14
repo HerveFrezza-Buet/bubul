@@ -1,6 +1,6 @@
 #pragma once
 
-#define bubulG 9.81
+#define bubulG (9.81 * .1)
 
 namespace bubul {
 
@@ -43,6 +43,7 @@ namespace bubul {
 
     template<typename RANDOM_ENGINE>
     Weighted(RANDOM_ENGINE& gen, const demo2d::Point& pos, double speed) : Gas(gen, pos, speed) {
+      init_weighted();
     }
     
     template<typename RANDOM_ENGINE>
@@ -50,8 +51,9 @@ namespace bubul {
       init_weighted();
     }
       
-    virtual double   Ec() const override {return _Ec;}
-    virtual double   Ep() const override {return _Ep;}
+    virtual double Ec() const override {return _Ec;}
+    virtual double Ep() const override {return _Ep;}
+    virtual double E()  const override {return _Ec + _Ep;}
     
     virtual void operator++() override {
       pos.y  += - .5 * bubulG * time.dt_2 + dpos.y * time.dt;

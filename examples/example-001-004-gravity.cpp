@@ -8,21 +8,21 @@
 #include <algorithm>
 #include <cmath>
 
-#define SPEED 0
+#define SPEED 10
 #define RADIUS 50
 
 #define PI 3.14159365435
 
 using ref = std::shared_ptr<bubul::Particle>;
 
-bubul::param::Time    bubul::Particle::time    = .005;
-bubul::param::Gravity bubul::Weighted::gravity = -20;
+bubul::param::Time    bubul::Particle::time    = .01;
+bubul::param::Gravity bubul::Weighted::gravity = -RADIUS;
 
 int main(int argc, char* argv[]) {
   std::random_device rd;  
   std::mt19937 random_device(rd());
 
-  unsigned int nb_threads = std::thread::hardware_concurrency();
+  unsigned int nb_threads = 1;//std::thread::hardware_concurrency();
 
   if(argc != 2) {
     std::cout << "Usage : " << argv[0] << " <nb-gas-particles>" << std::endl;
@@ -57,6 +57,11 @@ int main(int argc, char* argv[]) {
     *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 50., y));
   }
 
+  // Energy bar
+  double sum = bubul::E(1, particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
+  bubul::plot::EnergyHBar bar({-RADIUS, RADIUS+1}, 2, 2*RADIUS/sum);
+  bar.display.push_back({"Ec", cv::Scalar(255, 180, 190)});
+  bar.display.push_back({"Ep", cv::Scalar(190, 180, 255)});
 
   std::cout << std::endl
 	    << std::endl
@@ -73,6 +78,7 @@ int main(int argc, char* argv[]) {
   while(keycode != 27) {
     image = cv::Scalar(255,255,255);
 
+    gas_end = particles.begin() + nb_particles;
 
     if(do_simul) {
       bubul::hit(nb_threads, particles.begin(), particles.end(),
@@ -84,6 +90,10 @@ int main(int argc, char* argv[]) {
     }
     std::copy(particles.begin(), particles.end(), drawer);
     
+    bar.content["Ec"] = bubul::Ec(nb_threads, particles.begin(), gas_end, [](auto& ptr) -> bubul::Particle& {return *ptr;});
+    bar.content["Ep"] = bubul::Ep(nb_threads, particles.begin(), gas_end, [](auto& ptr) -> bubul::Particle& {return *ptr;});
+    bar(image, frame);
+     
     cv::imshow("Gas", image);
     keycode = cv::waitKey(1) & 0xFF;
     
@@ -93,13 +103,9 @@ int main(int argc, char* argv[]) {
       break;
     case 'u':
       gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git) {
-	(*git)->set_position(demo2d::uniform(random_device, 
-					     demo2d::Point(-(RADIUS-.5), -(RADIUS-.5)),
-					     demo2d::Point( (RADIUS-.5),  (RADIUS-.5))));
-	(*git)->set_speed(SPEED*demo2d::Point::unitary(std::uniform_real_distribution<double>(0, 2*PI)(random_device)));			     
-      }
-      
+      for(git = particles.begin(); git != gas_end; ++git)
+	*git = std::make_shared<bubul::Weighted>(random_device, demo2d::Point(-(RADIUS-.5), -(RADIUS-.5)), demo2d::Point((RADIUS-.5), (RADIUS-.5)), SPEED);
+      bar.rescale(2 * RADIUS / bubul::E(nb_threads, particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;}));
       break;
     default:
       break;
