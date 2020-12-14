@@ -22,13 +22,13 @@ int main(int argc, char* argv[]) {
   unsigned int nb_threads = std::thread::hardware_concurrency();
 
   if(argc != 2) {
-    std::cout << "Usage : " << argv[0] << " <nb-hot-gas-particles (300)>" << std::endl;
+    std::cout << "Usage : " << argv[0] << " <nb-hot-gas-particles (200)>" << std::endl;
     return 0;
   }
   
   unsigned int nb_hot_particles    = std::stoi(argv[1]); 
   unsigned int nb_cold1_particles  = nb_hot_particles;
-  unsigned int nb_cold2_particles  = 4*nb_hot_particles;
+  unsigned int nb_cold2_particles  = 5*nb_hot_particles;
   
   auto image = cv::Mat(1000, 1200, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .015*image.size().width, true);
