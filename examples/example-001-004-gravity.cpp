@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
   auto out = std::back_inserter(particles);
   
   for(unsigned int i=0; i < nb_particles; ++i)
-    *(out++) = std::make_shared<bubul::Weighted>(random_device, demo2d::Point(-(RADIUS-.5), -(RADIUS-.5)), demo2d::Point((RADIUS-.5), (RADIUS-.5)), SPEED);
+    *(out++) = std::make_shared<bubul::Weighted>(random_device, demo2d::Point(-(RADIUS-.5), -(RADIUS-.5)), demo2d::Point((RADIUS-.5), (-.5*RADIUS)), SPEED);
 
   // Let us add walls.
   for(double x = -50; x <= 50; x+=1.) {
