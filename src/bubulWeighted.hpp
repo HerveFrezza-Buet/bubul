@@ -1,6 +1,6 @@
 #pragma once
 
-#define bubulG (9.81 * .1)
+#define bubulG 9.81
 
 namespace bubul {
 
