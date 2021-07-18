@@ -9,7 +9,7 @@
 #include <cmath>
 #include <thread>
 
-
+#define TWOPI 6.283185307179586
 #define SPEED 10
 
 using ref = std::shared_ptr<bubul::Particle>;
@@ -23,12 +23,13 @@ int main(int argc, char* argv[]) {
   unsigned int nb_threads = std::thread::hardware_concurrency();
   
 
-  if(argc != 2) {
-    std::cout << "Usage : " << argv[0] << " <nb-gas-particles>" << std::endl;
+  if(argc != 3) {
+    std::cout << "Usage : " << argv[0] << " [circle|square] <nb-gas-particles>" << std::endl;
     return 0;
   }
 
-  unsigned int nb_particles = std::stoi(argv[1]);
+  unsigned int nb_particles = std::stoi(argv[2]);
+  std::string wall_shape = argv[1];
   
   auto image = cv::Mat(1000, 1000, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .02*image.size().width, true);
@@ -46,13 +47,21 @@ int main(int argc, char* argv[]) {
     *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-14.5, -14.5), demo2d::Point(14.5, 14.5), SPEED);
 
   // Let us add walls.
-  for(double x = -15; x <= 15; x+=1.) {
-    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -15.));
-    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  15.));
+  if(wall_shape == "square") {
+    for(double x = -15; x <= 15; x+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -15.));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  15.));
+    }
+    for(double y = -14; y <= 14; y+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-15., y));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 15., y));
+    }
   }
-  for(double y = -14; y <= 14; y+=1.) {
-    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-15., y));
-    *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 15., y));
+  else {
+#define NB_WALLS 150
+#define WALL_RADIUS 22
+    for(unsigned int i=0; i < NB_WALLS; ++i)
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(WALL_RADIUS * demo2d::Point::unitary(i*TWOPI/(double)NB_WALLS));
   }
 
   particles[0]->set_color(50, 50, 150);

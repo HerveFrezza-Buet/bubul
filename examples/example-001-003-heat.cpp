@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
   bar.display.push_back({"w1", cv::Scalar(  0,   0, 120)});
   bar.display.push_back({"g2", cv::Scalar(255, 180, 190)});
   bar.display.push_back({"w2", cv::Scalar(  0,   0, 120)});
-  bar.display.push_back({"g3", cv::Scalar(255, 180, 190)});
+  bar.display.push_back({"g3", cv::Scalar(200, 100, 110)});
 
   std::cout << std::endl
 	    << std::endl
