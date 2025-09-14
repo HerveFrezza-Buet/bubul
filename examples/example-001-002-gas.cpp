@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
   
 
   if(argc != 3) {
-    std::cout << "Usage : " << argv[0] << " [circle|square] <nb-gas-particles>" << std::endl;
+    std::cout << "Usage : " << argv[0] << " [circle|square|rectangle] <nb-gas-particles>" << std::endl;
     return 0;
   }
 
@@ -57,11 +57,21 @@ int main(int argc, char* argv[]) {
       *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 15., y));
     }
   }
-  else {
+  else if (wall_shape == "circle") {
 #define NB_WALLS 150
 #define WALL_RADIUS 22
     for(unsigned int i=0; i < NB_WALLS; ++i)
       *(out++) = std::make_shared<bubul::adiabatic::Limit>(WALL_RADIUS * demo2d::Point::unitary(i*TWOPI/(double)NB_WALLS));
+  }
+  else {
+    for(double x = -25; x <= 25; x+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -15.));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  15.));
+    }
+    for(double y = -14; y <= 14; y+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-25., y));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 25., y));
+    }
   }
 
   particles[0]->set_color(50, 50, 150);
@@ -118,10 +128,12 @@ int main(int argc, char* argv[]) {
       break;
     case 'u':
       gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git)
+      for(git = particles.begin(); git != gas_end; ++git) {
 	(*git)->set_position(demo2d::uniform(random_device,
 					     demo2d::Point(-14.5, -14.5),
 					     demo2d::Point( 14.5,  14.5)));
+	(*git)->set_speed(random_device, SPEED);
+      }
       break;
     case 'j':
       gas_end = particles.begin() + nb_particles;

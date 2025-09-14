@@ -65,6 +65,7 @@ namespace bubul {
     const demo2d::Point  p()                                  const {return m * dpos;}
     void                 set_position(const demo2d::Point& p)       {pos  = p;}
     void                 set_speed(const demo2d::Point& s)          {dpos = s;}
+    template<typename RANDOM_ENGINE> void set_speed(RANDOM_ENGINE& gen,double speed) {dpos = speed*demo2d::Point::unitary(std::uniform_real_distribution<double>(0., 2*std::numbers::pi)(gen));}
     virtual void         set_mass(double mass)                      {m = mass; inv_m = 1/mass;}
     void                 set_color(unsigned char r,
 				   unsigned char g,

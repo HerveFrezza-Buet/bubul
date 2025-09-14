@@ -4,6 +4,7 @@
 
 #include <bubulParticle.hpp>
 #include <demo2d.hpp>
+#include <numbers>
 
 
 #define bubulGAS_MASS 1
@@ -21,7 +22,7 @@ namespace bubul {
 
     template<typename RANDOM_ENGINE>
     Gas(RANDOM_ENGINE& gen, const demo2d::Point& pos, double speed)
-      : Gas(pos, speed*demo2d::Point::unitary(std::uniform_real_distribution<double>(0, 6.283185307179586)(gen))) {}
+      : Gas(pos, speed*demo2d::Point::unitary(std::uniform_real_distribution<double>(0, 2*std::numbers::pi)(gen))) {}
     
     template<typename RANDOM_ENGINE>
     Gas(RANDOM_ENGINE& gen, const demo2d::Point& pos_min, const demo2d::Point& pos_max, double speed)
