@@ -10,7 +10,7 @@
 #include <thread>
 
 #define HOT_SPEED  10
-#define COLD_SPEED  0.05
+#define COLD_SPEED  0.01
 using ref = std::shared_ptr<bubul::Particle>;
 
 bubul::param::Time bubul::Particle::time = .01;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   
   unsigned int nb_hot_particles    = std::stoi(argv[1]); 
   unsigned int nb_cold1_particles  = nb_hot_particles;
-  unsigned int nb_cold2_particles  = 5*nb_hot_particles;
+  unsigned int nb_cold2_particles  = 3*nb_hot_particles;
   
   auto image = cv::Mat(1000, 1200, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .015*image.size().width, true);

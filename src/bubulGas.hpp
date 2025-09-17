@@ -8,6 +8,7 @@
 
 
 #define bubulGAS_MASS 1
+#define bubulMGAS_MASS 10
 
 namespace bubul {
   class Gas : public Particle {
@@ -36,7 +37,7 @@ namespace bubul {
   class MGas : public Particle {
   public:
     MGas(const demo2d::Point& pos, const demo2d::Point& speed)
-      : Particle(10*bubulGAS_MASS, pos, speed) {
+      : Particle(bubulMGAS_MASS, pos, speed) {
       color = cv::Scalar(200, 100, 110); 
     }
     
