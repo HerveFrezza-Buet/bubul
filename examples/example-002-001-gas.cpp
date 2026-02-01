@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
   
   std::string main_window {"Click me ! Hit <space> or 'u' ! <ESC> ends."};
   auto image = cv::Mat(1000, 1000, CV_8UC3, cv::Scalar(255,255,255));
-  auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .02*image.size().width, true);
+  auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .024*image.size().width, true);
   auto gui = demo2d::opencv::gui(main_window, frame); 
   gui.loop_ms = 1; 
   
@@ -52,8 +52,8 @@ int main(int argc, char* argv[]) {
   std::vector<ref> particles;
   std::size_t nb_wall_particles;
 
-#define GAS_MAX 2000
-  gui[main_window] += {"Nb", [&particles, &nb_wall_particles, &gen](double slider_value) {
+#define GAS_MAX 3000
+  gui[main_window] += {std::string("max = ") + std::to_string(GAS_MAX), [&particles, &nb_wall_particles, &gen](double slider_value) {
     std::size_t target_nb = (std::size_t)(GAS_MAX*slider_value) + 1;
     std::size_t nb = particles.size() - nb_wall_particles;
     if(target_nb > nb) {
@@ -66,6 +66,16 @@ int main(int argc, char* argv[]) {
     
   }};
   
+  gui += {cv::EVENT_LBUTTONDOWN,
+      [&particles, &nb_wall_particles, &gen](const demo2d::Point&){
+	for(auto git = particles.begin() + nb_wall_particles; git != particles.end(); ++git) {
+	  (*git)->set_position(demo2d::uniform(gen,
+					       demo2d::Point(-SIDE + 1, -SIDE + 1),
+					       demo2d::Point( SIDE - 1,  SIDE - 1)));
+	  (*git)->set_speed(gen, SPEED);
+	}
+      }};
+
   auto out  = std::back_inserter(particles);
   
   for(double x = -SIDE; x <= SIDE; x+=1.) {
