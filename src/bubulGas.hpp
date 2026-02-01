@@ -10,6 +10,7 @@
 #define bubulGAS_MASS 1
 #define bubulMGAS_MASS 10
 
+
 namespace bubul {
   class Gas : public Particle {
   public:

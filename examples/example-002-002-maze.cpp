@@ -13,6 +13,7 @@
 #define SPEED 5
 #define SIDE 20
 #define STEP 8
+#define BBOX_MARGIN 1
 
 #define MIN_X (-SIDE + 1)
 #define MAX_X (SIDE - STEP - 1)
@@ -144,9 +145,17 @@ int main(int argc, char* argv[]) {
 
   unsigned int nb_threads = std::thread::hardware_concurrency();
 
+  demo2d::sample::BBox source {demo2d::Point(maze_pos(4) + BBOX_MARGIN, maze_pos(4) + BBOX_MARGIN),
+			       demo2d::Point(maze_pos(5) - BBOX_MARGIN, maze_pos(5) - BBOX_MARGIN)};
+
+  demo2d::sample::BBox sink {demo2d::Point(maze_pos(4) + BBOX_MARGIN, maze_pos(0) + BBOX_MARGIN),
+			     demo2d::Point(maze_pos(5) - BBOX_MARGIN, maze_pos(1) - BBOX_MARGIN)};
+
+  bool pump = false;
+  bool ink = false;
   
   
-  std::string main_window {"Click me ! Hit <space> or 'u' ! <ESC> ends."};
+  std::string main_window {"Click me ! Hit <space> or 'c' ! <ESC> ends."};
   auto image = cv::Mat(1000, 1000, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .024*image.size().width, true);
   auto gui = demo2d::opencv::gui(main_window, frame); 
@@ -162,6 +171,9 @@ int main(int argc, char* argv[]) {
   std::vector<ref> particles;
   std::size_t nb_wall_particles;
 
+  gui += {32, [&pump, &ink](){pump = !pump; ink = false;}};
+  gui += {'c', [&ink](){ink = true;}};
+  
   gui += {std::string("max = ") + std::to_string(GAS_MAX), [&particles, &nb_wall_particles, &gen](double slider_value) {
     std::size_t target_nb = (std::size_t)(GAS_MAX*slider_value) + 1;
     std::size_t nb = particles.size() - nb_wall_particles;
@@ -182,6 +194,7 @@ int main(int argc, char* argv[]) {
 					       demo2d::Point(MIN_X, MIN_Y),
 					       demo2d::Point(MAX_X, MAX_Y)));
 	  (*git)->set_speed(gen, SPEED);
+	  (*git)->set_color(190, 180, 255);
 	}
       }};
 
@@ -196,6 +209,18 @@ int main(int argc, char* argv[]) {
 		     [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
     image = cv::Scalar(255,255,255);
+
+    if(pump) {
+      demo2d::opencv::draw(image, frame, source, cv::Scalar(200, 255, 200), -1);
+      demo2d::opencv::draw(image, frame, sink,   cv::Scalar(200, 100, 110), -1);
+      for(auto p : particles)
+	if(sink.contains(p->position())) {
+	  p->set_position(source.uniform(gen));
+	  if(ink)
+	    p->set_color(0, 200, 0);
+	}
+    }
+    
     std::copy(particles.begin(), particles.end(), drawer);
 
     gui << image;
