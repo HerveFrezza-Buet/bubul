@@ -144,7 +144,6 @@ int main(int argc, char* argv[]) {
 
   unsigned int nb_threads = std::thread::hardware_concurrency();
 
-  demo2d::
   
   
   std::string main_window {"Click me ! Hit <space> or 'u' ! <ESC> ends."};
