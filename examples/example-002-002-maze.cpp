@@ -10,18 +10,25 @@
 #include <thread>
 
 #define TWOPI 6.283185307179586
-#define SPEED 10
+#define SPEED 5
 #define SIDE 20
+#define STEP 8
+
+#define MIN_X (-SIDE + 1)
+#define MAX_X (SIDE - STEP - 1)
+#define MIN_Y (-SIDE + 1)
+#define MAX_Y (SIDE - 1)
+
+#define GAS_MAX 1500
 
 using ref = std::shared_ptr<bubul::Particle>;
 
 bubul::param::Time bubul::Particle::time = .01;
 
 ref new_gas(std::mt19937& gen) {
-  
   return std::make_shared<bubul::Gas>(gen,
-				      demo2d::Point(-SIDE + 1, -SIDE + 1),
-				      demo2d::Point( SIDE - 1,  SIDE - 1),
+				      demo2d::Point(MIN_X, MIN_Y),
+				      demo2d::Point(MAX_X, MAX_Y),
 				      SPEED);
 }
 
@@ -29,11 +36,115 @@ ref new_wall(const demo2d::Point& pos) {
   return std::make_shared<bubul::adiabatic::Limit>(pos);
 }
 
+double maze_pos(std::size_t p) {return -SIDE + (double)(STEP) * p;}
+
+template<typename OutIter>
+void maze(OutIter out) {
+  
+  for(double x = -SIDE; x <= SIDE; x++) {
+    *(out++) = new_wall({x, -SIDE});
+    *(out++) = new_wall({x,  SIDE});
+  }
+  
+  for(double y = -(SIDE-1); y <= (SIDE-1); y++) 
+    *(out++) = new_wall({-SIDE, y});
+  
+  {
+    auto c = maze_pos(4);
+    auto l  = maze_pos(4);
+    for(double y = maze_pos(1); y < l; y++) 
+      *(out++) = new_wall({c, y});
+  }
+
+  ////////
+
+  {
+    double c = maze_pos(5);
+    double l = maze_pos(5);
+    for(double y = maze_pos(4); y < l; y++) 
+      *(out++) = new_wall({c, y});
+    l = maze_pos(1);
+    for(double y = maze_pos(0); y < l; y++) 
+      *(out++) = new_wall({c, y});
+  }
+
+  {
+    double l = maze_pos(1);
+    double c = maze_pos(5);
+    for(double x = maze_pos(4)+1; x <= c; x++) 
+      *(out++) = new_wall({x, l});
+    l = maze_pos(4);
+    for(double x = maze_pos(3); x < c; x++) 
+      *(out++) = new_wall({x, l});
+    
+  }
+
+  ////////
+  
+  {
+    auto c = maze_pos(1);
+    auto l = maze_pos(4);
+    for(double y = maze_pos(1); y <= l; y++) 
+      *(out++) = new_wall({c, y});
+  }
+  
+  {
+    auto l = maze_pos(3);
+    auto c = maze_pos(1);
+    for(double x = maze_pos(0) + 1; x < c; x++) 
+      *(out++) = new_wall({x, l});
+  }
+  
+  {
+    auto l = maze_pos(1);
+    auto c = maze_pos(2);
+    for(double x = maze_pos(1) + 1; x <= c; x++) 
+      *(out++) = new_wall({x, l});
+  }
+  
+  {
+    auto l = maze_pos(2);
+    auto c = maze_pos(4);
+    for(double x = maze_pos(2) + 1; x < c; x++) 
+      *(out++) = new_wall({x, l});
+  }
+  
+  {
+    auto c = maze_pos(3);
+    auto l = maze_pos(1);
+    for(double y = maze_pos(0) + 1; y <= l; y++) 
+      *(out++) = new_wall({c, y});
+  }
+  
+  {
+    auto c = maze_pos(2);
+    auto l = maze_pos(3);
+    for(double y = maze_pos(2); y < l; y++) 
+      *(out++) = new_wall({c, y});
+  }
+  
+  {
+    auto c = maze_pos(2);
+    auto l = maze_pos(5);
+    for(double y = maze_pos(4) + 1; y < l; y++) 
+      *(out++) = new_wall({c, y});
+  }
+  
+  {
+    auto l = maze_pos(3);
+    auto c = maze_pos(3);
+    for(double x = maze_pos(2); x <= c; x++) 
+      *(out++) = new_wall({x, l});
+  }
+}
+
 int main(int argc, char* argv[]) {
   std::random_device rd;  
   std::mt19937 gen(rd());
 
   unsigned int nb_threads = std::thread::hardware_concurrency();
+
+  demo2d::
   
   
   std::string main_window {"Click me ! Hit <space> or 'u' ! <ESC> ends."};
@@ -52,7 +163,6 @@ int main(int argc, char* argv[]) {
   std::vector<ref> particles;
   std::size_t nb_wall_particles;
 
-#define GAS_MAX 3000
   gui += {std::string("max = ") + std::to_string(GAS_MAX), [&particles, &nb_wall_particles, &gen](double slider_value) {
     std::size_t target_nb = (std::size_t)(GAS_MAX*slider_value) + 1;
     std::size_t nb = particles.size() - nb_wall_particles;
@@ -70,25 +180,15 @@ int main(int argc, char* argv[]) {
       [&particles, &nb_wall_particles, &gen](const demo2d::Point&){
 	for(auto git = particles.begin() + nb_wall_particles; git != particles.end(); ++git) {
 	  (*git)->set_position(demo2d::uniform(gen,
-					       demo2d::Point(-SIDE + 1, -SIDE + 1),
-					       demo2d::Point( SIDE - 1,  SIDE - 1)));
+					       demo2d::Point(MIN_X, MIN_Y),
+					       demo2d::Point(MAX_X, MAX_Y)));
 	  (*git)->set_speed(gen, SPEED);
 	}
       }};
 
-  auto out  = std::back_inserter(particles);
-  
-  for(double x = -SIDE; x <= SIDE; x+=1.) {
-    *(out++) = new_wall({x, -SIDE});
-    *(out++) = new_wall({x,  SIDE});
-    }
-  for(double y = -(SIDE-1); y <= (SIDE-1); y+=1.) {
-    *(out++) = new_wall({-SIDE, y});
-    *(out++) = new_wall({ SIDE, y});
-  }
+  maze(std::back_inserter(particles));
   nb_wall_particles = particles.size();
-
-  *(out++) = new_gas(gen);
+  particles.push_back(new_gas(gen));
 
   while(gui) {
     bubul::hit(nb_threads, particles.begin(), particles.end(),
