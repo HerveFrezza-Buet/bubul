@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
   std::size_t nb_wall_particles;
 
   gui += {32, [&pump, &ink](){pump = !pump; ink = false;}};
-  gui += {'c', [&ink](){ink = true;}};
+  gui += {'c', [&ink](){ink = !ink;}};
   
   gui += {std::string("max = ") + std::to_string(GAS_MAX), [&particles, &nb_wall_particles, &gen](double slider_value) {
     std::size_t target_nb = (std::size_t)(GAS_MAX*slider_value) + 1;
@@ -240,14 +240,19 @@ int main(int argc, char* argv[]) {
     image = cv::Scalar(255,255,255);
 
     if(pump) {
-      demo2d::opencv::draw(image, frame, source, cv::Scalar(200, 255, 200), -1);
+      demo2d::opencv::draw(image, frame, source, cv::Scalar(150, 200, 150), -1);
       demo2d::opencv::draw(image, frame, sink,   cv::Scalar(200, 100, 110), -1);
-      cv::fillPoly(image, polygons, cv::Scalar(200, 200, 200), cv::LINE_8);
+      if(ink)
+	cv::fillPoly(image, polygons, cv::Scalar(200, 255, 200), cv::LINE_8);
+      else
+	cv::fillPoly(image, polygons, cv::Scalar(200, 200, 200), cv::LINE_8);
       for(auto p : particles)
 	if(sink.contains(p->position())) {
 	  p->set_position(source.uniform(gen));
 	  if(ink)
 	    p->set_color(0, 200, 0);
+	  else
+	    p->set_color(190, 180, 255);
 	}
     }
     
