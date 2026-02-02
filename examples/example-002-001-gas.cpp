@@ -10,7 +10,7 @@
 #include <thread>
 
 #define TWOPI 6.283185307179586
-#define SPEED 10
+#define SPEED 5
 #define SIDE 20
 
 using ref = std::shared_ptr<bubul::Particle>;

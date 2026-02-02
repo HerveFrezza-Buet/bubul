@@ -139,6 +139,34 @@ void maze(OutIter out) {
   }
 }
 
+#define ARROW_BOTTOM_MARGIN 2
+#define ARROW_BODY_MARGIN 3
+#define ARROW_HEIGHT 4
+#define ARROW_EXTRA 1.5
+#define ARROW_YEXTRA 2
+std::vector<std::vector<cv::Point>> arrow(demo2d::opencv::Frame& frame) {
+  std::vector<std::vector<cv::Point>> res {1};
+  auto& poly = res[0];
+
+  auto out = std::back_inserter(poly);
+
+  double xmin = maze_pos(4) + ARROW_BODY_MARGIN;
+  double xmax = maze_pos(5)+1 - ARROW_BODY_MARGIN;
+  double axis = .5*(xmin + xmax);
+  double ymin = maze_pos(1) + ARROW_BOTTOM_MARGIN;
+  double ymax = maze_pos(3) + ARROW_YEXTRA;
+  
+  *(out++) = frame(demo2d::Point(xmin, ymin));
+  *(out++) = frame(demo2d::Point(xmax, ymin));
+  *(out++) = frame(demo2d::Point(xmax, ymax));
+  *(out++) = frame(demo2d::Point(xmax + ARROW_EXTRA, ymax));
+  *(out++) = frame(demo2d::Point(axis, ymax + ARROW_HEIGHT));
+  *(out++) = frame(demo2d::Point(xmin - ARROW_EXTRA, ymax));
+  *(out++) = frame(demo2d::Point(xmin, ymax));
+
+  return res;
+}
+
 int main(int argc, char* argv[]) {
   std::random_device rd;  
   std::mt19937 gen(rd());
@@ -202,6 +230,7 @@ int main(int argc, char* argv[]) {
   nb_wall_particles = particles.size();
   particles.push_back(new_gas(gen));
 
+  auto polygons = arrow(frame);
   while(gui) {
     bubul::hit(nb_threads, particles.begin(), particles.end(),
 	       [](auto& ptr) -> bubul::Particle& {return *ptr;});
@@ -213,6 +242,7 @@ int main(int argc, char* argv[]) {
     if(pump) {
       demo2d::opencv::draw(image, frame, source, cv::Scalar(200, 255, 200), -1);
       demo2d::opencv::draw(image, frame, sink,   cv::Scalar(200, 100, 110), -1);
+      cv::fillPoly(image, polygons, cv::Scalar(200, 200, 200), cv::LINE_8);
       for(auto p : particles)
 	if(sink.contains(p->position())) {
 	  p->set_position(source.uniform(gen));
