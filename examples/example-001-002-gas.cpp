@@ -78,13 +78,14 @@ int main(int argc, char* argv[]) {
 
   std::cout << std::endl
 	    << std::endl
-	    << "<ESC>   quit"       << std::endl
-	    << "<space> pause/play" << std::endl
-	    << "l       left"       << std::endl
-	    << "c       center"     << std::endl
-	    << "u       uniform"    << std::endl
-	    << "j       jet"        << std::endl
-	    << "b       bump"       << std::endl
+	    << "<ESC>   quit"          << std::endl
+	    << "<space> pause/play"    << std::endl
+	    << "i       invert speeds" << std::endl
+	    << "l       left"          << std::endl
+	    << "c       center"        << std::endl
+	    << "u       uniform"       << std::endl
+	    << "j       jet"           << std::endl
+	    << "b       bump"          << std::endl
 	    << std::endl;
   
   int keycode = 0;
@@ -111,6 +112,11 @@ int main(int argc, char* argv[]) {
     switch((char)(keycode)) {
     case ' ':
       do_simul = !do_simul;
+      break;
+    case 'i':
+      gas_end = particles.begin() + nb_particles;
+      for(git = particles.begin(); git != gas_end; ++git)
+	(*git)->set_speed(-(*git)->speed());
       break;
     case 'l':
       gas_end = particles.begin() + nb_particles;
