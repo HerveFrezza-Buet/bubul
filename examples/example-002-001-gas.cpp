@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
   std::vector<ref> particles;
   std::size_t nb_wall_particles;
 
-#define GAS_MAX 3000
+#define GAS_MAX 1500
   gui += {std::string("max = ") + std::to_string(GAS_MAX), [&particles, &nb_wall_particles, &gen](double slider_value) {
     std::size_t target_nb = (std::size_t)(GAS_MAX*slider_value) + 1;
     std::size_t nb = particles.size() - nb_wall_particles;

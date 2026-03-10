@@ -226,6 +226,7 @@ int main(int argc, char* argv[]) {
 	}
       }};
 
+
   maze(std::back_inserter(particles));
   nb_wall_particles = particles.size();
   particles.push_back(new_gas(gen));
