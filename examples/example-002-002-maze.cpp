@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <thread>
+#include <string>
 
 #define TWOPI 6.283185307179586
 #define SPEED 5
@@ -171,6 +172,14 @@ int main(int argc, char* argv[]) {
   std::random_device rd;  
   std::mt19937 gen(rd());
 
+  if(argc != 2) {
+    std::cout << "Usage : " << argv[0] << " <img-side>" << std::endl;
+    return 0;
+      
+  }
+
+  unsigned int img_size = std::stoul(argv[1]);
+
   unsigned int nb_threads = std::thread::hardware_concurrency();
 
   demo2d::sample::BBox source {demo2d::Point(maze_pos(4) + BBOX_MARGIN, maze_pos(4) + BBOX_MARGIN),
@@ -184,7 +193,7 @@ int main(int argc, char* argv[]) {
   
   
   std::string main_window {"Click me ! Hit <space> or 'c' ! <ESC> ends."};
-  auto image = cv::Mat(1000, 1000, CV_8UC3, cv::Scalar(255,255,255));
+  auto image = cv::Mat(img_size, img_size, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .024*image.size().width, true);
   auto gui = demo2d::opencv::gui(main_window, frame); 
   gui.loop_ms = 1; 
