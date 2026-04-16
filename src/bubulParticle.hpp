@@ -86,6 +86,47 @@ namespace bubul {
    * This updates the particles after an elastic collision.
    */
   bool hit(Particle& p1, Particle& p2) {
+    // Bug fix by Frederic Pennerath
+    auto delta_pos    = p2.pos - p1.pos;
+    auto delta_pos_n2 = delta_pos.norm2();
+    
+    if(delta_pos_n2 >= bubulDIAMETER_2)
+      return false;
+
+    auto pp1 = p1;
+    auto pp2 = p2;
+    pp1 += Particle::time.dt;
+    pp2 += Particle::time.dt;
+    if((pp1.pos -pp2.pos).norm2() > delta_pos_n2)
+      return false;
+
+    if(p1.m == infinite_mass()) {
+      if(p2.m == infinite_mass()) {
+	double coef  = ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
+	p1.dpos     += coef * delta_pos;
+	p2.dpos     -= coef * delta_pos;
+      }
+      else {
+	double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
+	p2.dpos     -= coef * delta_pos;
+      }
+    }
+    else if(p2.m == infinite_mass()) {
+      double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
+      p1.dpos     += coef * delta_pos;
+    }
+    else {
+      double J  = 2.0 / (1./p1.m + 1./p2.m) * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
+      p1.dpos += J / p1.m * delta_pos;
+      p2.dpos -= J / p2.m * delta_pos;
+    }
+    
+    return true;
+  }
+
+
+#ifdef bubulOBSOLETE_BAD_VERSION
+  bool hit(Particle& p1, Particle& p2) {
     auto delta_pos    = p2.pos - p1.pos;
     auto delta_pos_n2 = delta_pos.norm2();
     
@@ -145,6 +186,8 @@ namespace bubul {
     
     return true;
   }
+
+#endif
 
   template<typename Iter, typename ParticleOf>
   unsigned int hit(unsigned int nb_threads, Iter begin, Iter end, const ParticleOf& pof) {
