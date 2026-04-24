@@ -86,7 +86,8 @@ namespace bubul {
    * This updates the particles after an elastic collision.
    */
   bool hit(Particle& p1, Particle& p2) {
-    // Bug fix by Frederic Pennerath
+    // Bug fix by Frederic Pennerath... thanks !
+    
     auto delta_pos    = p2.pos - p1.pos;
     auto delta_pos_n2 = delta_pos.norm2();
     
@@ -165,72 +166,8 @@ namespace bubul {
   }
 
 
-#ifdef bubulOBSOLETE_BAD_VERSION
-  bool hit(Particle& p1, Particle& p2) {
-    auto delta_pos    = p2.pos - p1.pos;
-    auto delta_pos_n2 = delta_pos.norm2();
-    
-    if(delta_pos_n2 >= bubulDIAMETER_2)
-      return false;
-
-    auto pp1 = p1;
-    auto pp2 = p2;
-    pp1 += Particle::time.dt;
-    pp2 += Particle::time.dt;
-    if((pp1.pos -pp2.pos).norm2() > delta_pos_n2)
-      return false;
-
-    if(p1.m == infinite_mass()) {
-      if(p2.m == infinite_mass()) {
-	double coef  = ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
-	p1.dpos     += coef * delta_pos;
-	p2.dpos     -= coef * delta_pos;
-      }
-      else {
-	double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
-	p2.dpos     -= coef * delta_pos;
-      }
-    }
-    else if(p2.m == infinite_mass()) {
-      double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
-      p1.dpos     += coef * delta_pos;
-    }
-    else {
-      double coef  = (2.0 / (p1.m + p2.m) * delta_pos_n2) * ((p2.dpos - p1.dpos) * delta_pos);
-      double E = p1.m * p1.dpos.norm2() + p2.m * p2.dpos.norm2();
-      p1.dpos     += p2.m * coef * delta_pos;
-      p2.dpos     -= p1.m * coef * delta_pos;
-
-      double v1_2 = p1.dpos.norm2();
-      double v2_2 = p2.dpos.norm2();
-      double Ec1  = p1.m * v1_2;
-      double Ec2  = p2.m * v2_2;
-      E -=  Ec1 + Ec2;
-      if(std::fabs(E) > bubulEPSILON_EC) {
-	if(E > 0) {
-	  if(v1_2 > v2_2) 
-	    p1.dpos *= std::sqrt(1 + E / Ec1);
-	  else
-	    p2.dpos *= std::sqrt(1 + E / Ec2);
-	}
-	else {
-	  if(v1_2 > v2_2) 
-	    p2.dpos *= std::sqrt(1 + E / Ec1);
-	  else
-	    p1.dpos *= std::sqrt(1 + E / Ec2);
-	}
-      }
-      
-      
-    }
-    
-    return true;
-  }
-
-#endif
-
   template<typename Iter, typename ParticleOf>
-  unsigned int hit(unsigned int nb_threads, Iter begin, Iter end, const ParticleOf& pof) {
+  unsigned int hit(Iter begin, Iter end, const ParticleOf& pof) {
     unsigned int nb_hits = 0;
 
     for(auto it1 = begin; it1 != end; ++it1) {

@@ -242,7 +242,7 @@ int main(int argc, char* argv[]) {
 
   auto polygons = arrow(frame);
   while(gui) {
-    bubul::hit(nb_threads, particles.begin(), particles.end(),
+    bubul::hit(particles.begin(), particles.end(),
 	       [](auto& ptr) -> bubul::Particle& {return *ptr;});
     bubul::timestep(nb_threads, particles.begin() + nb_wall_particles, particles.end(),
 		     [](auto& ptr) -> bubul::Particle& {return *ptr;});

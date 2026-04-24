@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     image = cv::Scalar(255,255,255);
 
     if(do_simul) {
-      bubul::hit(nb_threads, particles.begin(), particles.end(),
+      bubul::hit(particles.begin(), particles.end(),
 		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
       gas_end = particles.begin() + nb_particles;
