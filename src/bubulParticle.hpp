@@ -5,6 +5,7 @@
 #include <iostream>
 #include <limits>
 #include <future>
+#include <random>
 
 #define bubulDIAMETER 1
 #define bubulDIAMETER_2 (bubulDIAMETER * bubulDIAMETER)
@@ -175,6 +176,28 @@ namespace bubul {
       auto it2 = it1;
       std::advance(it2, 1);
       while(it2 != end) nb_hits += (unsigned int)(hit(p1, pof(*(it2++))));
+    }
+    
+    return nb_hits;
+  }
+  
+  template<typename Iter, typename ParticleOf, typename RANDOM_GENERATOR>
+  unsigned int hit(Iter begin, Iter end, const ParticleOf& pof, RANDOM_GENERATOR& gen) {
+    unsigned int nb_hits = 0;
+
+#define DELTA .01
+    auto u = std::uniform_real_distribution(-DELTA, DELTA);
+
+    for(auto it1 = begin; it1 != end; ++it1) {
+      auto& p1 = pof(*it1);
+      auto it2 = it1;
+      std::advance(it2, 1);
+      while(it2 != end) {
+	auto& p2 = pof(*(it2++));
+	nb_hits += (unsigned int)(hit(p1, p2));
+	p1.set_speed(p1.speed() + demo2d::Point(u(gen), u(gen)));
+	p2.set_speed(p2.speed() + demo2d::Point(u(gen), u(gen)));
+      }
     }
     
     return nb_hits;

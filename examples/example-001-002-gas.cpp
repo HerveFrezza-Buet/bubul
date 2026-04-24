@@ -10,7 +10,7 @@
 #include <thread>
 
 #define TWOPI 6.283185307179586
-#define SPEED 10
+#define SPEED 5
 
 using ref = std::shared_ptr<bubul::Particle>;
 
@@ -97,8 +97,11 @@ int main(int argc, char* argv[]) {
     image = cv::Scalar(255,255,255);
 
     if(do_simul) {
+      // bubul::hit(particles.begin(), particles.end(),
+      // 		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
       bubul::hit(particles.begin(), particles.end(),
-		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
+      		 [](auto& ptr) -> bubul::Particle& {return *ptr;},
+		 random_device);
 
       gas_end = particles.begin() + nb_particles;
      bubul::timestep(nb_threads, particles.begin(), gas_end,
