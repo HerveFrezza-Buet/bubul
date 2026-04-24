@@ -100,25 +100,65 @@ namespace bubul {
     if((pp1.pos -pp2.pos).norm2() > delta_pos_n2)
       return false;
 
+    auto unit_n = delta_pos / std::sqrt(delta_pos_n2);
+    // This is the unit vector on the two center axis. Conservation of
+    // mementum and kinetic enegy is expres along that direction.
+      
+    auto dv  = ((p2.dpos - p1.dpos) * unit_n) * unit_n;
     if(p1.m == infinite_mass()) {
       if(p2.m == infinite_mass()) {
-	double coef  = ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
-	p1.dpos     += coef * delta_pos;
-	p2.dpos     -= coef * delta_pos;
+	// same (infinite) mass. We just swap
+	// v'1 = v2, v'2 = v1
+	// i.e
+	// v1 += (v2 - v1)
+	// v2 -= (v2 - v1)
+	p1.dpos     += dv;
+	p2.dpos     -= dv;
       }
       else {
-	double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
-	p2.dpos     -= coef * delta_pos;
+	// v1 do not change. In a frame place at m1, V2 is only inverted. So in the external frame
+	// so in that frame,
+	// V'2 = -V2
+	// i.e. in the external frame
+	// v'2 - v1 = -(v2 - v1)
+	// v'2 = -v2 + 2v1
+	// v'2 = v2 - 2v2 + 2v1 = v2 - 2(v1 - v2)
+	// i.e.
+	// v2 -= 2(v2 - v1)   
+	p2.dpos -= 2*dv;
       }
     }
     else if(p2.m == infinite_mass()) {
-      double coef  = 2.0 * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
-      p1.dpos     += coef * delta_pos;
+	// v2 do not change. In a frame place at m2, V1 is only inverted. So in the external frame
+	// so in that frame,
+	// V'1 = -V1
+	// i.e. in the external frame
+	// v'1 - v2 = -(v1 - v2)
+	// v'1 = -v1 + 2v2 = v1 - 2v1 + 2v2 = v1 + 2(v2-v1)
+	// i.e.
+	// v1 += 2(v2 - v1)   
+      p1.dpos += 2*dv;
     }
     else {
-      double J  = 2.0 / (1./p1.m + 1./p2.m) * ((p2.dpos - p1.dpos) * delta_pos) / delta_pos_n2;
-      p1.dpos += J / p1.m * delta_pos;
-      p2.dpos -= J / p2.m * delta_pos;
+      // | m1*v1 + m2*v2 = m1*v'1 + m2*v'2
+      // | m1*v1^2+ m2*v2^2 = m1*v'1^2 + m2*v'2^2
+      //
+      // Solution: c = 1/(m1+m2)
+      //
+      // v'1 = c*(  (m1 - m2) * v1 + 2m2 * v2  )
+      // v'2 = c*(  2m1 * v1 + (m2 - m1) * v2  )
+      //
+      // v'1 = v1 + c( (m1 - m2 - m1 - m2) * v1 + 2m2 * v2) = v1 + 2c*m2*(v2 - v1)
+      // v'2 = v2 + c( 2m1 * v1 + (m2 - m1 - m2 - m1) * v2) = v2 - 2c*m1*(v2 - v1)
+      //
+      // v1 += 2c*m2*(v2 - v1)
+      // v2 -= 2c*m1*(v2 - v1)
+
+      double cc = 2.0/(p1.m + p2.m);
+    
+      p1.dpos += cc * p2.m * dv;
+      p2.dpos -= cc * p1.m * dv;
+      
     }
     
     return true;
