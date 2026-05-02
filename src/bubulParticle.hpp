@@ -36,7 +36,7 @@ namespace bubul {
     demo2d::Point pos;
     demo2d::Point dpos;
   
-    friend bool hit(Particle&, Particle&);
+    friend void hit(Particle&, Particle&, double);
     friend std::ostream& operator<<(std::ostream&, const Particle&);
     friend void draw(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, double);
     friend void draw_speed(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, const cv::Scalar&, int, double);
@@ -66,6 +66,7 @@ namespace bubul {
     const demo2d::Point  p()                                  const {return m * dpos;}
     void                 set_position(const demo2d::Point& p)       {pos  = p;}
     void                 set_speed(const demo2d::Point& s)          {dpos = s;}
+    void                 rescale_speed(double coef)                 {dpos *= coef;}
     template<typename RANDOM_ENGINE> void set_speed(RANDOM_ENGINE& gen,double speed) {dpos = speed*demo2d::Point::unitary(std::uniform_real_distribution<double>(0., 2*std::numbers::pi)(gen));}
     virtual void         set_mass(double mass)                      {m = mass; inv_m = 1/mass;}
     void                 set_color(unsigned char r,
@@ -81,26 +82,28 @@ namespace bubul {
     os << "[m = " << p.m << ", 1/m = " << p.inv_m << ", pos = " << p.pos << ", speed = " << p.dpos << ']';
     return os;
   }
-    
+
+
 
   /**
    * This updates the particles after an elastic collision.
    */
-  bool hit(Particle& p1, Particle& p2) {
+  
+  void hit(Particle& p1, Particle& p2, double normal_restitution) {
     // Bug fix by Frederic Pennerath... thanks !
     
     auto delta_pos    = p2.pos - p1.pos;
     auto delta_pos_n2 = delta_pos.norm2();
     
     if(delta_pos_n2 >= bubulDIAMETER_2)
-      return false;
+      return;
 
     auto pp1 = p1;
     auto pp2 = p2;
     pp1 += Particle::time.dt;
     pp2 += Particle::time.dt;
     if((pp1.pos -pp2.pos).norm2() > delta_pos_n2)
-      return false;
+      return;
 
     auto unit_n = delta_pos / std::sqrt(delta_pos_n2);
     // This is the unit vector on the two center axis. Conservation of
@@ -127,19 +130,19 @@ namespace bubul {
 	// v'2 = v2 - 2v2 + 2v1 = v2 - 2(v1 - v2)
 	// i.e.
 	// v2 -= 2(v2 - v1)   
-	p2.dpos -= 2*dv;
+	p2.dpos -= normal_restitution * 2*dv;
       }
     }
     else if(p2.m == infinite_mass()) {
-	// v2 do not change. In a frame place at m2, V1 is only inverted. So in the external frame
-	// so in that frame,
-	// V'1 = -V1
-	// i.e. in the external frame
-	// v'1 - v2 = -(v1 - v2)
-	// v'1 = -v1 + 2v2 = v1 - 2v1 + 2v2 = v1 + 2(v2-v1)
-	// i.e.
-	// v1 += 2(v2 - v1)   
-      p1.dpos += 2*dv;
+      // v2 do not change. In a frame place at m2, V1 is only inverted. So in the external frame
+      // so in that frame,
+      // V'1 = -V1
+      // i.e. in the external frame
+      // v'1 - v2 = -(v1 - v2)
+      // v'1 = -v1 + 2v2 = v1 - 2v1 + 2v2 = v1 + 2(v2-v1)
+      // i.e.
+      // v1 += 2(v2 - v1)   
+      p1.dpos += normal_restitution * 2*dv;
     }
     else {
       // | m1*v1 + m2*v2 = m1*v'1 + m2*v'2
@@ -156,53 +159,25 @@ namespace bubul {
       // v1 += 2c*m2*(v2 - v1)
       // v2 -= 2c*m1*(v2 - v1)
 
-      double cc = 2.0/(p1.m + p2.m);
+      double cc = normal_restitution * 2.0/(p1.m + p2.m);
     
       p1.dpos += cc * p2.m * dv;
       p2.dpos -= cc * p1.m * dv;
       
     }
     
-    return true;
   }
-
 
   template<typename Iter, typename ParticleOf>
-  unsigned int hit(Iter begin, Iter end, const ParticleOf& pof) {
-    unsigned int nb_hits = 0;
-
+  void hit(Iter begin, Iter end, const ParticleOf& pof, double normal_restitution = 1.0) {
     for(auto it1 = begin; it1 != end; ++it1) {
       auto& p1 = pof(*it1);
       auto it2 = it1;
       std::advance(it2, 1);
-      while(it2 != end) nb_hits += (unsigned int)(hit(p1, pof(*(it2++))));
+      while(it2 != end) hit(p1, pof(*(it2++)), normal_restitution);
     }
-    
-    return nb_hits;
   }
   
-  template<typename Iter, typename ParticleOf, typename RANDOM_GENERATOR>
-  unsigned int hit(Iter begin, Iter end, const ParticleOf& pof, RANDOM_GENERATOR& gen) {
-    unsigned int nb_hits = 0;
-
-#define DELTA .01
-    auto u = std::uniform_real_distribution(-DELTA, DELTA);
-
-    for(auto it1 = begin; it1 != end; ++it1) {
-      auto& p1 = pof(*it1);
-      auto it2 = it1;
-      std::advance(it2, 1);
-      while(it2 != end) {
-	auto& p2 = pof(*(it2++));
-	nb_hits += (unsigned int)(hit(p1, p2));
-	p1.set_speed(p1.speed() + demo2d::Point(u(gen), u(gen)));
-	p2.set_speed(p2.speed() + demo2d::Point(u(gen), u(gen)));
-      }
-    }
-    
-    return nb_hits;
-  }
-
   
   template<typename Iter, typename ParticleOf>
   double E(unsigned int nb_threads, Iter begin, Iter end, const ParticleOf& pof) {
@@ -296,6 +271,12 @@ namespace bubul {
   }
 
 
+  template<typename Iter, typename ParticleOf>
+  void adjust_Ec(unsigned int nb_threads, double target_Ec, Iter begin, Iter end, const ParticleOf& pof) {
+    double Ec = bubul::Ec(nb_threads, begin, end, pof);
+    double alpha = std::sqrt(target_Ec/Ec);
+    for(auto it = begin; it != end; ++it) pof(*it).rescale_speed(alpha);
+  }
   
 
   
@@ -358,10 +339,10 @@ namespace bubul {
 	
     template<typename DO_DRAW, typename PARTICLE_OF, typename RADIUS_OF>
     ParticleDrawer(cv::Mat& image,
-	       demo2d::opencv::Frame frame,
-	       const DO_DRAW&      do_draw,
-	       const PARTICLE_OF&  particle_of,
-	       const RADIUS_OF&    radius_of)
+		   demo2d::opencv::Frame frame,
+		   const DO_DRAW&      do_draw,
+		   const PARTICLE_OF&  particle_of,
+		   const RADIUS_OF&    radius_of)
       : image(image),
 	frame(frame),
 	do_draw(do_draw),
@@ -384,10 +365,10 @@ namespace bubul {
 
   template<typename OBJECT, typename DO_DRAW, typename PARTICLE_OF, typename RADIUS_OF>
   ParticleDrawer<OBJECT> particle_drawer(cv::Mat&      image,
-				 demo2d::opencv::Frame frame,
-				 const DO_DRAW&        do_draw,
-				 const PARTICLE_OF&    particle_of,
-				 const RADIUS_OF&      radius_of) {
+					 demo2d::opencv::Frame frame,
+					 const DO_DRAW&        do_draw,
+					 const PARTICLE_OF&    particle_of,
+					 const RADIUS_OF&      radius_of) {
     return ParticleDrawer<OBJECT>(image, frame, do_draw, particle_of, radius_of);
   }
 

@@ -16,6 +16,10 @@ using ref = std::shared_ptr<bubul::Particle>;
 
 bubul::param::Time bubul::Particle::time = .01;
 
+double global_Ec(unsigned int nb_threads, auto begin, auto end) {
+  return bubul::Ec(nb_threads, begin, end, [](auto& ptr) -> bubul::Particle& {return *ptr;});
+}
+
 int main(int argc, char* argv[]) {
   std::random_device rd;  
   std::mt19937 random_device(rd());
@@ -23,17 +27,20 @@ int main(int argc, char* argv[]) {
   unsigned int nb_threads = std::thread::hardware_concurrency();
   
 
-  if(argc != 3) {
-    std::cout << "Usage : " << argv[0] << " [circle|square|rectangle] <nb-gas-particles>" << std::endl;
+  if(argc != 4) {
+    std::cout << "Usage : " << argv[0] << " img-side [circle|square|rectangle] <nb-gas-particles>" << std::endl;
     return 0;
   }
 
-  unsigned int nb_particles = std::stoi(argv[2]);
-  std::string wall_shape = argv[1];
+  unsigned int img_size = std::stoul(argv[1]);
+  unsigned int nb_particles = std::stoi(argv[3]);
+  std::string wall_shape = argv[2];
   
-  auto image = cv::Mat(1000, 1000, CV_8UC3, cv::Scalar(255,255,255));
+  std::string main_window {"Gas"};
+  auto image = cv::Mat(img_size, img_size, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .02*image.size().width, true);
-  cv::namedWindow("Gas", cv::WINDOW_AUTOSIZE);
+  auto gui = demo2d::opencv::gui(main_window, frame); 
+  gui.loop_ms = 1; 
 
   auto drawer = bubul::particle_drawer<ref>(image, frame,
 					    [](auto&)                               {return true;},
@@ -80,6 +87,7 @@ int main(int argc, char* argv[]) {
 	    << std::endl
 	    << "<ESC>   quit"          << std::endl
 	    << "<space> pause/play"    << std::endl
+	    << "e       toogles cinetic energy conservation" << std::endl
 	    << "i       invert speeds" << std::endl
 	    << "l       left"          << std::endl
 	    << "c       center"        << std::endl
@@ -88,91 +96,102 @@ int main(int argc, char* argv[]) {
 	    << "b       bump"          << std::endl
 	    << std::endl;
   
-  int keycode = 0;
   bool do_simul = false;
-  auto git = particles.begin();
-  auto gas_end = particles.begin();
+  bool Ec_conserv = true;
+  auto gas_begin = particles.begin();
+  auto gas_end   = particles.begin() + nb_particles;
+  double alpha = 1;
+  double Ec;
   
-  while(keycode != 27) {
+  gui += {' ', [&do_simul](){do_simul = not do_simul;}};
+  
+  gui += {'e', [&Ec, &Ec_conserv, gas_begin, gas_end, nb_threads](){
+    Ec_conserv = not Ec_conserv;
+    if(Ec_conserv)
+      Ec = global_Ec(nb_threads, gas_begin, gas_end);
+  }};
+
+  gui += {'i', [gas_begin, gas_end, nb_threads]() {
+    for(auto git = gas_begin; git != gas_end; ++git)
+      (*git)->rescale_speed(-1.0);
+  }};
+  
+  gui += {'l', [&Ec, &random_device, gas_begin, gas_end, nb_threads]() {
+    for(auto git = gas_begin; git != gas_end; ++git) {
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-14., -14.),
+					   demo2d::Point(-10.,  14.)));
+      (*git)->set_speed(random_device, SPEED);
+    }
+    Ec = global_Ec(nb_threads, gas_begin, gas_end);
+  }};
+  
+  gui += {'c', [&random_device, gas_begin, gas_end, nb_threads]() {
+    for(auto git = gas_begin; git != gas_end; ++git)
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-5., -5.),
+					   demo2d::Point( 5.,  5.)));
+  }};
+  
+  gui += {'u', [&Ec, &random_device, gas_begin, gas_end, nb_threads]() {
+    for(auto git = gas_begin; git != gas_end; ++git) {
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-14.5, -14.5),
+					   demo2d::Point( 14.5,  14.5)));
+      (*git)->set_speed(random_device, SPEED);
+    }
+    Ec = global_Ec(nb_threads, gas_begin, gas_end);
+  }};
+  
+  gui += {'j', [&Ec, &random_device, gas_begin, gas_end, nb_threads]() {
+    for(auto git = gas_begin; git != gas_end; ++git) {
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-3, -14.5),
+					   demo2d::Point( 3,  12.0)));
+      (*git)->set_speed(demo2d::Point(0, SPEED));
+    }
+    Ec = global_Ec(nb_threads, gas_begin, gas_end);
+  }};
+  
+  gui += {'b', [&Ec, &random_device, gas_begin, gas_end, nb_particles, nb_threads]() {
+    auto gas_half = gas_begin + nb_particles/2;
+    auto git = gas_begin;
+    for(; git != gas_half; ++git) {
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-4, -14.5),
+					   demo2d::Point( 2,  -8.5)));
+      (*git)->set_speed(demo2d::Point(0, SPEED));
+    }
+    for(; git != gas_end; ++git) {
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-2,  8.5),
+					   demo2d::Point( 4, 14.5)));
+      (*git)->set_speed(demo2d::Point(0, -SPEED));
+    }
+    Ec = global_Ec(nb_threads, gas_begin, gas_end);
+  }};
+
+  
+
+  gui += {"viscosity", [&alpha](double v){alpha = 1 - v;}};
+  
+  Ec = global_Ec(nb_threads, gas_begin, gas_end);
+  while(gui) {
     image = cv::Scalar(255,255,255);
 
     if(do_simul) {
-      // bubul::hit(particles.begin(), particles.end(),
-      // 		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
       bubul::hit(particles.begin(), particles.end(),
-      		 [](auto& ptr) -> bubul::Particle& {return *ptr;},
-		 random_device);
+		 [](auto& ptr) -> bubul::Particle& {return *ptr;},
+		 alpha);
+      if(Ec_conserv and alpha > 0)
+	bubul::adjust_Ec(nb_threads, Ec, gas_begin, gas_end, [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
-      gas_end = particles.begin() + nb_particles;
-     bubul::timestep(nb_threads, particles.begin(), gas_end,
-		     [](auto& ptr) -> bubul::Particle& {return *ptr;});
+      bubul::timestep(nb_threads, gas_begin, gas_end, [](auto& ptr) -> bubul::Particle& {return *ptr;});
     }
+    
     std::copy(particles.begin(), particles.end(), drawer);
+    gui << image;
     
-    cv::imshow("Gas", image);
-    keycode = cv::waitKey(1) & 0xFF;
-    
-    switch((char)(keycode)) {
-    case ' ':
-      do_simul = !do_simul;
-      break;
-    case 'i':
-      gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git)
-	(*git)->set_speed(-(*git)->speed());
-      break;
-    case 'l':
-      gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git)
-	(*git)->set_position(demo2d::uniform(random_device,
-					     demo2d::Point(-14., -14.),
-					     demo2d::Point(-10.,  14.)));
-      break;
-    case 'c':
-      gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git)
-	(*git)->set_position(demo2d::uniform(random_device,
-					     demo2d::Point(-5., -5.),
-					     demo2d::Point( 5.,  5.)));
-      break;
-    case 'u':
-      gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git) {
-	(*git)->set_position(demo2d::uniform(random_device,
-					     demo2d::Point(-14.5, -14.5),
-					     demo2d::Point( 14.5,  14.5)));
-	(*git)->set_speed(random_device, SPEED);
-      }
-      break;
-    case 'j':
-      gas_end = particles.begin() + nb_particles;
-      for(git = particles.begin(); git != gas_end; ++git) {
-	(*git)->set_position(demo2d::uniform(random_device,
-					     demo2d::Point(-3, -14.5),
-					     demo2d::Point( 3,  12.0)));
-	(*git)->set_speed(demo2d::Point(0, SPEED));
-      }
-      break;
-    case 'b':
-      gas_end = particles.begin() + nb_particles/2;
-      git = particles.begin();
-      for(; git != gas_end; ++git) {
-	(*git)->set_position(demo2d::uniform(random_device,
-					     demo2d::Point(-4, -14.5),
-					     demo2d::Point( 2,  -8.5)));
-	(*git)->set_speed(demo2d::Point(0, SPEED));
-      }
-      gas_end = particles.begin() + nb_particles;
-      for(; git != gas_end; ++git) {
-	(*git)->set_position(demo2d::uniform(random_device,
-					     demo2d::Point(-2,  8.5),
-					     demo2d::Point( 4, 14.5)));
-	(*git)->set_speed(demo2d::Point(0, -SPEED));
-      }
-      break;
-    default:
-      break;
-    }
     
   }
 
