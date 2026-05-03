@@ -36,7 +36,7 @@ namespace bubul {
     demo2d::Point pos;
     demo2d::Point dpos;
   
-    friend void hit(Particle&, Particle&, double);
+    friend void hit(Particle&, Particle&, double, bool);
     friend std::ostream& operator<<(std::ostream&, const Particle&);
     friend void draw(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, double);
     friend void draw_speed(cv::Mat&, const demo2d::opencv::Frame&, const Particle&, const cv::Scalar&, int, double);
@@ -86,10 +86,16 @@ namespace bubul {
 
 
   /**
-   * This updates the particles after an elastic collision.
+   * This updates the particles after an elastic collision. A
+   * non-conservative mode is allowed, even if not physically
+   * realistic. It enables the emergence of population effects (global
+   * rotations).
+   *
+   * @param normal_restitution in [0, 1], it dampens the velocity after bounce on the normal direction.
+   * @param keep_Ec If normal_restitution is less than one, this compensates for kinetic energy loss.
    */
   
-  void hit(Particle& p1, Particle& p2, double normal_restitution) {
+  void hit(Particle& p1, Particle& p2, double normal_restitution, bool keep_Ec) {
     // Bug fix by Frederic Pennerath... thanks !
     
     auto delta_pos    = p2.pos - p1.pos;
@@ -97,6 +103,8 @@ namespace bubul {
     
     if(delta_pos_n2 >= bubulDIAMETER_2)
       return;
+    if(p1.m == infinite_mass() and p2.m == infinite_mass()) 
+      return; // Infinite masses do not move.
 
     auto pp1 = p1;
     auto pp2 = p2;
@@ -105,33 +113,27 @@ namespace bubul {
     if((pp1.pos -pp2.pos).norm2() > delta_pos_n2)
       return;
 
+    bool rescale_Ec = normal_restitution != 1 and keep_Ec;
+    double Ec = 0;
+    if(rescale_Ec)
+      Ec = p1.Ec() + p2.Ec();
+
     auto unit_n = delta_pos / std::sqrt(delta_pos_n2);
     // This is the unit vector on the two center axis. Conservation of
     // mementum and kinetic enegy is expres along that direction.
       
     auto dv  = ((p2.dpos - p1.dpos) * unit_n) * unit_n;
     if(p1.m == infinite_mass()) {
-      if(p2.m == infinite_mass()) {
-	// same (infinite) mass. We just swap
-	// v'1 = v2, v'2 = v1
-	// i.e
-	// v1 += (v2 - v1)
-	// v2 -= (v2 - v1)
-	p1.dpos     += dv;
-	p2.dpos     -= dv;
-      }
-      else {
-	// v1 do not change. In a frame place at m1, V2 is only inverted. So in the external frame
-	// so in that frame,
-	// V'2 = -V2
-	// i.e. in the external frame
-	// v'2 - v1 = -(v2 - v1)
-	// v'2 = -v2 + 2v1
-	// v'2 = v2 - 2v2 + 2v1 = v2 - 2(v1 - v2)
-	// i.e.
-	// v2 -= 2(v2 - v1)   
-	p2.dpos -= normal_restitution * 2*dv;
-      }
+      // v1 do not change. In a frame place at m1, V2 is only inverted. So in the external frame
+      // so in that frame,
+      // V'2 = -V2
+      // i.e. in the external frame
+      // v'2 - v1 = -(v2 - v1)
+      // v'2 = -v2 + 2v1
+      // v'2 = v2 - 2v2 + 2v1 = v2 - 2(v1 - v2)
+      // i.e.
+      // v2 -= 2(v2 - v1)   
+      p2.dpos -= 2*dv;
     }
     else if(p2.m == infinite_mass()) {
       // v2 do not change. In a frame place at m2, V1 is only inverted. So in the external frame
@@ -142,7 +144,7 @@ namespace bubul {
       // v'1 = -v1 + 2v2 = v1 - 2v1 + 2v2 = v1 + 2(v2-v1)
       // i.e.
       // v1 += 2(v2 - v1)   
-      p1.dpos += normal_restitution * 2*dv;
+      p1.dpos += 2*dv;
     }
     else {
       // | m1*v1 + m2*v2 = m1*v'1 + m2*v'2
@@ -162,19 +164,25 @@ namespace bubul {
       double cc = normal_restitution * 2.0/(p1.m + p2.m);
     
       p1.dpos += cc * p2.m * dv;
-      p2.dpos -= cc * p1.m * dv;
-      
+      p2.dpos -= cc * p1.m * dv;      
+
+      if(rescale_Ec) {
+	double new_Ec = p1.Ec() + p2.Ec();
+	double alpha = std::sqrt(Ec/new_Ec);
+	p1.rescale_speed(alpha);
+	p2.rescale_speed(alpha);
+      }
     }
     
   }
 
   template<typename Iter, typename ParticleOf>
-  void hit(Iter begin, Iter end, const ParticleOf& pof, double normal_restitution = 1.0) {
+  void hit(Iter begin, Iter end, const ParticleOf& pof, double normal_restitution, bool keep_Ec) {
     for(auto it1 = begin; it1 != end; ++it1) {
       auto& p1 = pof(*it1);
       auto it2 = it1;
       std::advance(it2, 1);
-      while(it2 != end) hit(p1, pof(*(it2++)), normal_restitution);
+      while(it2 != end) hit(p1, pof(*(it2++)), normal_restitution, keep_Ec);
     }
   }
   
