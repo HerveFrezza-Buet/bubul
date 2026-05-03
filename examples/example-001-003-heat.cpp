@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
   while(keycode != 27) {
     image = cv::Scalar(255,255,255);
  
-     bubul::hit(particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;});
+    bubul::hit(particles.begin(), particles.end(), [](auto& ptr) -> bubul::Particle& {return *ptr;}, 1.0, true);
 
      gas_end = particles.begin() + nb_mobile_particles;
      bubul::timestep(nb_threads, particles.begin(), gas_end, [](auto& ptr) -> bubul::Particle& {return *ptr;});

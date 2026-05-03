@@ -101,15 +101,17 @@ int main(int argc, char* argv[]) {
 
   std::cout << std::endl
 	    << std::endl
-	    << "<ESC>   quit"          << std::endl
-	    << "<space> pause/play"    << std::endl
-	    << "e       toogles kinetic energy conservation" << std::endl
-	    << "i       invert speeds" << std::endl
-	    << "l       left"          << std::endl
-	    << "c       center"        << std::endl
-	    << "u       uniform"       << std::endl
-	    << "j       jet"           << std::endl
-	    << "b       bump"          << std::endl
+	    << "<ESC>               quit"          << std::endl
+	    << "<space>             pause/play"    << std::endl
+	    << "e                   toogles kinetic energy conservation" << std::endl
+	    << std::endl
+	    << "i                   invert speeds" << std::endl
+	    << "l                   left"          << std::endl
+	    << "c                   center"        << std::endl
+	    << "u / left click      uniform"       << std::endl
+	    << "j                   jet"           << std::endl
+	    << "b                   bump"          << std::endl
+	    << std::endl
 	    << std::endl;
   
   bool do_simul = false;
@@ -152,6 +154,16 @@ int main(int argc, char* argv[]) {
     }
   }};
   
+  
+  gui += {cv::EVENT_LBUTTONDOWN, [&random_device, &particles, nb_walls, nb_threads](const demo2d::Point&){
+    for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git) {
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-14.5, -14.5),
+					   demo2d::Point( 14.5,  14.5)));
+      (*git)->set_speed(random_device, SPEED);
+    }
+  }};
+
   gui += {'j', [&random_device, &particles, nb_walls, nb_threads]() {
     for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git) {
       (*git)->set_position(demo2d::uniform(random_device,

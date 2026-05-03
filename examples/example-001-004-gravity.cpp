@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
-#define SPEED 10
+#define SPEED 20
 #define RADIUS 50
 
 #define PI 3.14159365435
@@ -82,7 +82,8 @@ int main(int argc, char* argv[]) {
 
     if(do_simul) {
       bubul::hit(particles.begin(), particles.end(),
-		 [](auto& ptr) -> bubul::Particle& {return *ptr;});
+		 [](auto& ptr) -> bubul::Particle& {return *ptr;},
+		 1.0, true);
 
       gas_end = particles.begin() + nb_particles;
      bubul::timestep(nb_threads, particles.begin(), gas_end,

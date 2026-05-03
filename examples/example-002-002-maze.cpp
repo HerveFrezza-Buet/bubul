@@ -14,14 +14,15 @@
 #define SPEED 5
 #define SIDE 20
 #define STEP 8
-#define BBOX_MARGIN 1
+#define BBOX_MARGIN 1.5
 
 #define MIN_X (-SIDE + 1)
 #define MAX_X (SIDE - STEP - 1)
 #define MIN_Y (-SIDE + 1)
 #define MAX_Y (SIDE - 1)
 
-#define GAS_MAX 1500
+#define GAS_MAX 700
+#define GAS_VISC .9
 
 using ref = std::shared_ptr<bubul::Particle>;
 
@@ -243,7 +244,7 @@ int main(int argc, char* argv[]) {
   auto polygons = arrow(frame);
   while(gui) {
     bubul::hit(particles.begin(), particles.end(),
-	       [](auto& ptr) -> bubul::Particle& {return *ptr;});
+	       [](auto& ptr) -> bubul::Particle& {return *ptr;}, GAS_VISC, true);
     bubul::timestep(nb_threads, particles.begin() + nb_wall_particles, particles.end(),
 		     [](auto& ptr) -> bubul::Particle& {return *ptr;});
 
