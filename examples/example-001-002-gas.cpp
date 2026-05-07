@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 	    << std::endl;
   
   bool do_simul = false;
-  bool Ec_conserv = true;
+  bool Ec_conserv = false;
   double alpha = 1;
   
   gui += {' ', [&do_simul](){do_simul = not do_simul;}};
