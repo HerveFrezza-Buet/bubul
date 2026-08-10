@@ -82,26 +82,42 @@ int main(int argc, char* argv[]) {
       *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( SQUARE_RADIUS, y));
     }
   }
+  else if(wall_shape == "rectangle") {
+#define SQUARE_WIDTH 20.
+#define SQUARE_WIDTH_ (SQUARE_WIDTH - 1)
+#define SQUARE_HEIGHT 15.
+#define SQUARE_HEIGHT_ (SQUARE_HEIGHT - 1)
+    img_width = img_size;
+    img_height = img_size * (SQUARE_HEIGHT / SQUARE_WIDTH);
+    unit_size = .022 * img_size;
+    rand_width = SQUARE_WIDTH - 1.;
+    rand_height = SQUARE_HEIGHT - 1.;
+    for(double x = -SQUARE_WIDTH; x <= SQUARE_WIDTH; x+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -SQUARE_HEIGHT));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  SQUARE_HEIGHT));
+    }
+    for(double y = -SQUARE_HEIGHT_; y <= SQUARE_HEIGHT_; y+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-SQUARE_WIDTH, y));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( SQUARE_WIDTH, y));
+    }
+  }
   else if (wall_shape == "circle") {
 #define NB_WALLS 150
 #define WALL_RADIUS 22
+    img_width = img_size;
+    img_height = img_size;
+    unit_size = .022 * img_size;
+    rand_width = WALL_RADIUS * 0.707 - 1.;
+    rand_height = rand_width;
     for(unsigned int i=0; i < NB_WALLS; ++i)
       *(out++) = std::make_shared<bubul::adiabatic::Limit>(WALL_RADIUS * demo2d::Point::unitary(i*TWOPI/(double)NB_WALLS));
   }
   else {
-    for(double x = -25; x <= 25; x+=1.) {
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -15.));
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  15.));
-    }
-    for(double y = -14; y <= 14; y+=1.) {
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-25., y));
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 25., y));
-    }
+    std::cout << "Bad shape \"" << wall_shape << "\"." << std::endl;
   }
+	
 
-
-  
-  auto image = cv::Mat(img_width, img_height, CV_8UC3, cv::Scalar(255,255,255));
+  auto image = cv::Mat(img_height, img_width, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), unit_size, true);
   auto gui = demo2d::opencv::gui(main_window, frame); 
   gui.loop_ms = 1; 
