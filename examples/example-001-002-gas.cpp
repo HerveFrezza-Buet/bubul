@@ -21,7 +21,8 @@ bubul::param::Time bubul::Particle::time = .01;
 void set_nb_particles(std::vector<ref>& particles,
 		      auto& random_device,
 		      unsigned int nb_walls,
-		      unsigned int nb) {
+		      unsigned int nb,
+		      double rand_width, double rand_height) {
   nb++;
   unsigned int current = particles.size() - nb_walls;
   if(nb < current)
@@ -30,7 +31,7 @@ void set_nb_particles(std::vector<ref>& particles,
     unsigned int delta = nb - current;
     auto out = std::back_inserter(particles);
     for(unsigned int i = 0; i < delta; ++i)
-      *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-14.5, -14.5), demo2d::Point(14.5, 14.5), SPEED);
+      *(out++) = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-rand_width, -rand_height), demo2d::Point(rand_width, rand_height), SPEED);
   }
 }
 
@@ -50,30 +51,35 @@ int main(int argc, char* argv[]) {
   std::string wall_shape = argv[2];
   
   std::string main_window {"Gas"};
-  auto image = cv::Mat(img_size, img_size, CV_8UC3, cv::Scalar(255,255,255));
-  auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .02*image.size().width, true);
-  auto gui = demo2d::opencv::gui(main_window, frame); 
-  gui.loop_ms = 1; 
-
-  auto drawer = bubul::particle_drawer<ref>(image, frame,
-					    [](auto&)                               {return true;},
-					    [](auto& ptr) -> const bubul::Particle& {return *ptr;},
-					    [](auto&)                               {return .5;});
 
 
   // Here are the particles.
   std::vector<ref> particles;
+
+  unsigned int img_width   {0};
+  unsigned int img_height  {0};
+  double       unit_size   {0};
+  double       rand_width  {0};
+  double       rand_height {0};
+
   
   // Let us add walls.
   auto out = std::back_inserter(particles);
   if(wall_shape == "square") {
-    for(double x = -15; x <= 15; x+=1.) {
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -15.));
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  15.));
+#define SQUARE_RADIUS 17.
+#define SQUARE_RADIUS_ (SQUARE_RADIUS - 1)
+    img_width = img_size;
+    img_height = img_size;
+    unit_size = .026 * img_size;
+    rand_width = SQUARE_RADIUS - 1.;
+    rand_height = SQUARE_RADIUS - 1.;
+    for(double x = -SQUARE_RADIUS; x <= SQUARE_RADIUS; x+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x, -SQUARE_RADIUS));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(x,  SQUARE_RADIUS));
     }
-    for(double y = -14; y <= 14; y+=1.) {
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-15., y));
-      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 15., y));
+    for(double y = -SQUARE_RADIUS_; y <= SQUARE_RADIUS_; y+=1.) {
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point(-SQUARE_RADIUS, y));
+      *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( SQUARE_RADIUS, y));
     }
   }
   else if (wall_shape == "circle") {
@@ -92,9 +98,23 @@ int main(int argc, char* argv[]) {
       *(out++) = std::make_shared<bubul::adiabatic::Limit>(demo2d::Point( 25., y));
     }
   }
+
+
+  
+  auto image = cv::Mat(img_width, img_height, CV_8UC3, cv::Scalar(255,255,255));
+  auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), unit_size, true);
+  auto gui = demo2d::opencv::gui(main_window, frame); 
+  gui.loop_ms = 1; 
+
+  auto drawer = bubul::particle_drawer<ref>(image, frame,
+					    [](auto&)                               {return true;},
+					    [](auto& ptr) -> const bubul::Particle& {return *ptr;},
+					    [](auto&)                               {return .5;});
+
+
   unsigned int nb_walls = particles.size();
 
-  auto p = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-14.5, -14.5), demo2d::Point(14.5, 14.5), SPEED);
+  auto p = std::make_shared<bubul::Gas>(random_device, demo2d::Point(-rand_width, -rand_height), demo2d::Point(rand_width, rand_height), SPEED);
   p->set_color(50, 50, 150);
   *(out++) = p;
 
@@ -129,72 +149,75 @@ int main(int argc, char* argv[]) {
       (*git)->rescale_speed(-1.0);
   }};
   
-  gui += {'l', [&random_device, &particles, nb_walls, nb_threads]() {
+  gui += {'l', [&random_device, &particles, nb_walls, nb_threads, rand_width, rand_height]() {
     for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git) {
       (*git)->set_position(demo2d::uniform(random_device,
-					   demo2d::Point(-14., -14.),
-					   demo2d::Point(-10.,  14.)));
+					   demo2d::Point(-rand_width, -rand_height),
+					   demo2d::Point(-rand_width*.25, rand_height)));
       (*git)->set_speed(random_device, SPEED);
     }
   }};
   
   gui += {'c', [&random_device, &particles, nb_walls, nb_threads]() {
-    for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git)
-      (*git)->set_position(demo2d::uniform(random_device,
-					   demo2d::Point(-5., -5.),
-					   demo2d::Point( 5.,  5.)));
-  }};
-  
-  gui += {'u', [&random_device, &particles, nb_walls, nb_threads]() {
     for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git) {
       (*git)->set_position(demo2d::uniform(random_device,
-					   demo2d::Point(-14.5, -14.5),
-					   demo2d::Point( 14.5,  14.5)));
+					   demo2d::Point(-1., -1.),
+					   demo2d::Point( 1.,  1.)));
+      (*git)->set_speed(random_device, SPEED);
+    }
+  }};
+  
+  gui += {'u', [&random_device, &particles, nb_walls, nb_threads, rand_width, rand_height]() {
+    for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git) {
+      (*git)->set_position(demo2d::uniform(random_device,
+					   demo2d::Point(-rand_width, -rand_height),
+					   demo2d::Point( rand_width,  rand_height)));
       (*git)->set_speed(random_device, SPEED);
     }
   }};
   
   
-  gui += {cv::EVENT_LBUTTONDOWN, [&random_device, &particles, nb_walls, nb_threads](const demo2d::Point&){
+  gui += {cv::EVENT_LBUTTONDOWN, [&random_device, &particles, nb_walls, nb_threads, rand_width, rand_height](const demo2d::Point&){
     for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git) {
       (*git)->set_position(demo2d::uniform(random_device,
-					   demo2d::Point(-14.5, -14.5),
-					   demo2d::Point( 14.5,  14.5)));
+					   demo2d::Point(-rand_width, -rand_height),
+					   demo2d::Point( rand_width,  rand_height)));
       (*git)->set_speed(random_device, SPEED);
     }
   }};
 
-  gui += {'j', [&random_device, &particles, nb_walls, nb_threads]() {
+  gui += {'j', [&random_device, &particles, nb_walls, nb_threads, rand_width, rand_height]() {
     for(auto git = particles.begin() + nb_walls; git != particles.end(); ++git) {
       (*git)->set_position(demo2d::uniform(random_device,
-					   demo2d::Point(-3, -14.5),
-					   demo2d::Point( 3,  12.0)));
+					   demo2d::Point(-.2 * rand_width, -rand_height),
+					   demo2d::Point( .2 * rand_width, .75 * rand_height)));
       (*git)->set_speed(demo2d::Point(0, SPEED));
     }
   }};
   
-  gui += {'b', [&random_device, &particles, nb_walls, nb_threads]() {
+  gui += {'b', [&random_device, &particles, nb_walls, nb_threads, rand_width, rand_height]() {
     auto git = particles.begin() + nb_walls;
     unsigned int nb_particles = std::distance(git, particles.end());
     auto gas_half = particles.begin() + nb_particles/2;
     for(; git != gas_half; ++git) {
       (*git)->set_position(demo2d::uniform(random_device,
-					   demo2d::Point(-4, -14.5),
-					   demo2d::Point( 2,  -8.5)));
+					   demo2d::Point(-.3 * rand_width, -rand_height),
+					   demo2d::Point( .1 * rand_width,  -.75 * rand_height)));
       (*git)->set_speed(demo2d::Point(0, SPEED));
     }
     for(; git != particles.end(); ++git) {
       (*git)->set_position(demo2d::uniform(random_device,
-					   demo2d::Point(-2,  8.5),
-					   demo2d::Point( 4, 14.5)));
+					   demo2d::Point(-.1 * rand_width, .75 * rand_height),
+					   demo2d::Point( .3 * rand_width,  rand_height)));
       (*git)->set_speed(demo2d::Point(0, -SPEED));
     }
   }};
   
 
-  gui += {"nb particles", [&random_device, &particles, nb_walls](double v){
+  gui += {"nb particles", [&random_device, &particles, nb_walls, rand_width, rand_height](double v){
     set_nb_particles(particles, random_device,
-		     nb_walls, (unsigned int)(1000*v + .5));
+		     nb_walls, (unsigned int)(1000*v + .5),
+		     rand_width, rand_height);
   }};
   
   gui += {"viscosity", [&alpha](double v){alpha = 1 - v;}};
